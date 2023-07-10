@@ -42,6 +42,7 @@ export default class ColoredTagsPlugin extends Plugin {
 	getTagsFromDOM(domEl: HTMLElement): string[] {
 		return Array.from(domEl.querySelectorAll(".tag, .cm-hashtag-end"))
 			.map((tagEl: HTMLElement) => tagEl.innerText.replace(/\#/g, ""))
+			.filter((tag) => !tag.match(/\/$/))
 			.filter((x) => x);
 	}
 
@@ -52,6 +53,7 @@ export default class ColoredTagsPlugin extends Plugin {
 
 				return tagName;
 			})
+			.filter((tag) => !tag.match(/\/$/))
 			.filter((x) => x.length);
 	}
 
