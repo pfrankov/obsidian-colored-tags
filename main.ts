@@ -1,31 +1,18 @@
-import { Plugin, MarkdownView } from "obsidian";
+import { Plugin, MarkdownView, debounce } from "obsidian";
 import Color from "colorjs.io";
 
-interface ColoredTagsPluginSettings {
-	mySetting: string;
-}
-
-const DEFAULT_SETTINGS: ColoredTagsPluginSettings = {
-	mySetting: "default",
-};
-
 export default class ColoredTagsPlugin extends Plugin {
-	settings: ColoredTagsPluginSettings;
-	updateDebounce: NodeJS.Timeout;
 	tagsSet: Set<string> = new Set();
 
 	async onload() {
 		this.registerEvent(
-			this.app.workspace.on("editor-change", () => {
-				this.updateDebounce && clearTimeout(this.updateDebounce);
-				this.updateDebounce = setTimeout(() => {
-					const view =
-						this.app.workspace.getActiveViewOfType(MarkdownView);
-					if (view?.contentEl) {
-						this.update(this.getTagsFromDOM(view.contentEl));
-					}
-				}, 300);
-			})
+			this.app.workspace.on("editor-change", debounce(() => {
+				const view =
+					this.app.workspace.getActiveViewOfType(MarkdownView);
+				if (view?.contentEl) {
+					this.update(this.getTagsFromDOM(view.contentEl));
+				}
+			}, 300, true))
 		);
 
 		this.tagsSet.clear();
@@ -67,7 +54,6 @@ export default class ColoredTagsPlugin extends Plugin {
 	}
 
 	onunload() {
-		this.updateDebounce && clearTimeout(this.updateDebounce);
 		this.tagsSet.clear();
 		removeCSS();
 	}
