@@ -7,9 +7,13 @@ Colorizes tags in different colors. The color depends on the tag content. Colors
 Text color contrast is automatically matched to comply with AA level WCAG 2.1.
 The colors are adjusted for the dark theme as well.
 
+## Roadmap
+- Settings for palette size, base chroma, and base lightness.
+
 ## Installation
 
 ### BRAT
 You can install this plugin via [BRAT](https://obsidian.md/plugins?id=obsidian42-brat): `pfrankov/obsidian-colored-tags`
 
-Inspired by [Colorful Tag plugin](https://github.com/rien7/obsidian-colorful-tag).
+## Inspired by
+- [Colorful Tag plugin](https://github.com/rien7/obsidian-colorful-tag).
