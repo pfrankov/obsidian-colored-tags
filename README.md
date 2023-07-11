@@ -8,7 +8,9 @@ Text color contrast is automatically matched to comply with AA level WCAG 2.1.
 The colors are adjusted for the dark theme as well.
 
 ## Roadmap
-- Settings for palette size, base chroma, and base lightness.
+- [ ] Settings for palette size, base chroma, and base lightness.
+- [ ] Optimization: store existing, already calculated colors of tags. Render only new ones.
+- [ ] Optimization: append styles instead of replacing each time.
 
 ## Installation
 
