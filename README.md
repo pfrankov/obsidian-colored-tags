@@ -1,4 +1,4 @@
-# Obsidian Colored Tags
+# Colored Tags Plugin for Obsidian
 
 ![demo](https://github.com/pfrankov/obsidian-colored-tags/assets/584632/6ea9920a-b68b-4658-8533-9e7e2aa3dbba)
 
