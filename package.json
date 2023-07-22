@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-colored-tags-plugin",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"description": "Colorizes tags in different colors. The color depends on the tag content. Colors of nested tags are mixed with parent tags. Text color contrast is automatically matched to comply with AA level of WCAG 2.1.",
 	"main": "main.js",
 	"scripts": {
