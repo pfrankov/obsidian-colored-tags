@@ -9,8 +9,8 @@ The colors are adjusted for the dark theme as well.
 
 ## Roadmap
 - [x] Settings for palette size, base chroma, and base lightness.
-- [ ] Optimization: store existing, already calculated colors of tags. Render only new ones.
-- [ ] Optimization: append styles instead of replacing each time.
+- [x] Optimization: store existing, already calculated colors of tags. Render only new ones.
+- [x] Optimization: append styles instead of replacing each time.
 
 ## Installation
 

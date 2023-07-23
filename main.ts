@@ -41,7 +41,6 @@ export default class ColoredTagsPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on("active-leaf-change", () => {
-				this.tagsSet.clear();
 				this.update(this.getTagsFromApp());
 			})
 		);
@@ -68,14 +67,16 @@ export default class ColoredTagsPlugin extends Plugin {
 	update(tagsList: string[]) {
 		if (tagsList.find((tag) => !this.tagsSet.has(tag))) {
 			tagsList.forEach((tag) => {
-				this.tagsSet.add(tag);
+				if (!this.tagsSet.has(tag)) {
+					this.tagsSet.add(tag);
+					colorizeTag(tag, {palettes: this.palettes, settings: this.settings});
+				}
 			});
-			colorizeTags(Array.from(this.tagsSet.keys()), {palettes: this.palettes, settings: this.settings});
 		}
 	}
 
 	reload() {
-		this.tagsSet.clear();
+		this.onunload();
 		this.generatePalettes();
 		this.update(this.getTagsFromApp());
 	}
@@ -138,7 +139,7 @@ function darkenColorForContrast(baseColor, contrast = 4.5) {
 		colorLight.l++;
 		colorDark.l--;
 	}
-	return "#f00";
+	return "#fff";
 }
 
 function getColors(
@@ -167,41 +168,36 @@ function getColors(
 	return {background, color};
 }
 
-function colorizeTags(tagNames: string[], {palettes, settings}) {
-	tagNames = tagNames.map((tag) => tag.replace(/#/g, ""));
+function colorizeTag(tagName: string, { palettes, settings }) {
+	tagName = tagName.replace(/#/g, "");
 
-	const css = tagNames
-		.map((tagName) => {
-			const tagHref = "#" + tagName.replace(/\//g, "\\/");
-			const tagFlat = tagName.replace(/\//g, "");
+	const tagHref = "#" + tagName.replace(/\//g, "\\/");
+	const tagFlat = tagName.replace(/\//g, "");
 
 
-			const {background: backgroundLight, color: colorLight} = getColors(tagName, palettes.light, settings.seed);
-			const {background: backgroundDark, color: colorDark} = getColors(
-				tagName,
-				palettes.dark,
-				settings.seed
-			);
-			return `
-				body a.tag[href="${tagHref}"], body .cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag {
-					background-color: ${backgroundLight};
-					color: ${colorLight};
-				}
-				body.theme-dark a.tag[href="${tagHref}"], body.theme-dark .cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag {
-					background-color: ${backgroundDark};
-					color: ${colorDark};
-				}
-		`;
-		})
-		.join("\n");
+	const {background: backgroundLight, color: colorLight} = getColors(tagName, palettes.light, settings.seed);
+	const {background: backgroundDark, color: colorDark} = getColors(
+		tagName,
+		palettes.dark,
+		settings.seed
+	);
+	appendCSS(`
+			body a.tag[href="${tagHref}"], body .cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag {
+				background-color: ${backgroundLight};
+				color: ${colorLight};
+			}
+			body.theme-dark a.tag[href="${tagHref}"], body.theme-dark .cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag {
+				background-color: ${backgroundDark};
+				color: ${colorDark};
+			}
+	`);
 
-	insertCSS(css);
 }
 
 function generateUniqueColor(string: string, palette, seed) {
 	let hashCode = 0;
 	for (let i = 0; i < string.length; i++) {
-		hashCode = string.charCodeAt(i) + (seed * 10) + ((hashCode << 5) - hashCode);
+		hashCode = string.charCodeAt(i) + seed + ((hashCode << 5) - hashCode);
 	}
 
 	hashCode = Math.abs(hashCode) % palette.length;
@@ -236,14 +232,16 @@ function generateColorPalette({isDarkTheme, paletteSize, baseChroma, baseLightne
 	return colorPalette;
 }
 
-function insertCSS(css: string): void {
-	removeCSS();
-	document.head
-		.createEl("style", {
-			type: "text/css",
-			attr: {"colored-tags-style": ""},
-		})
-		.setText(css);
+function appendCSS(css: string): void {
+	let styleEl = document.head.querySelector('[colored-tags-style]');
+	if (!styleEl) {
+		styleEl = document.head
+			.createEl("style", {
+				type: "text/css",
+				attr: {"colored-tags-style": ""},
+			});
+	}
+	styleEl.appendText(css);
 }
 
 function removeCSS(): void {
