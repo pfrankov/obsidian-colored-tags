@@ -1,4 +1,4 @@
-import {App, debounce, MarkdownView, Plugin, PluginSettingTab, Setting} from "obsidian";
+import {App, debounce, Plugin, PluginSettingTab, Setting} from "obsidian";
 import Color from "colorjs.io";
 
 interface ColoredTagsPluginSettings {
@@ -30,9 +30,7 @@ export default class ColoredTagsPlugin extends Plugin {
 		this.reload();
 
 		this.registerEvent(
-			this.app.workspace.on("editor-change", debounce(() => {
-				const view =
-					this.app.workspace.getActiveViewOfType(MarkdownView);
+			this.app.workspace.on("editor-change", debounce((editor, view) => {
 				if (view?.contentEl) {
 					this.update(this.getTagsFromDOM(view.contentEl));
 				}
