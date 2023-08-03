@@ -14,6 +14,9 @@ The colors are adjusted for the dark theme as well.
 
 ## Installation
 
+### Obsidian plugin store
+This plugin is available in the Obsidian community plugin store https://obsidian.md/plugins?id=colored-tags
+
 ### BRAT
 You can install this plugin via [BRAT](https://obsidian.md/plugins?id=obsidian42-brat): `pfrankov/obsidian-colored-tags`
 
