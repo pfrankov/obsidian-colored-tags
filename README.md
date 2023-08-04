@@ -3,7 +3,7 @@
 ![demo](https://github.com/pfrankov/obsidian-colored-tags/assets/584632/b9aacb23-1433-4775-8142-5af223634f62)
 
 
-Colorizes tags in different colors. The color depends on the tag content. Colors of nested tags are mixed with parent tags.
+Colorizes tags in different colors. Colors of nested tags are mixed with parent tags.
 Text color contrast is automatically matched to comply with AA level of WCAG 2.1.
 The colors are adjusted for the dark theme as well.
 

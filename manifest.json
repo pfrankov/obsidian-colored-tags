@@ -3,7 +3,7 @@
 	"name": "Colored Tags",
 	"version": "2.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Colorizes tags in different colors. The color depends on the tag content. Colors of nested tags are mixed with parent tags. Text color contrast is automatically matched to comply with AA level of WCAG 2.1.",
+	"description": "Colorizes tags in different colors. Colors of nested tags are mixed with parent tags. Text color contrast is automatically matched to comply with AA level of WCAG 2.1.",
 	"author": "Pavel Frankov",
 	"authorUrl": "https://github.com/pfrankov",
 	"isDesktopOnly": false
