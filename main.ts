@@ -237,7 +237,7 @@ export default class ColoredTagsPlugin extends Plugin {
 		const loadedData = await this.loadData();
 		let needToSave = false;
 
-		if (loadedData._version < 2) {
+		if (loadedData && loadedData._version < 2) {
 			needToSave = true;
 
 			loadedData.palette = 16;

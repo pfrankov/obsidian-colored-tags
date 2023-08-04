@@ -1,6 +1,6 @@
 # Colored Tags Plugin for Obsidian
 
-![demo](https://github.com/pfrankov/obsidian-colored-tags/assets/584632/6ea9920a-b68b-4658-8533-9e7e2aa3dbba)
+![demo](https://github.com/pfrankov/obsidian-colored-tags/assets/584632/b9aacb23-1433-4775-8142-5af223634f62)
 
 
 Colorizes tags in different colors. The color depends on the tag content. Colors of nested tags are mixed with parent tags.
