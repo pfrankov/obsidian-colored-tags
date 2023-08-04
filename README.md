@@ -11,7 +11,11 @@ The colors are adjusted for the dark theme as well.
 - [x] ~~Settings for palette size, base chroma, and base lightness.~~
 - [x] ~~Optimization: store existing, already calculated colors of tags. Render only new ones.~~
 - [x] ~~Optimization: append styles instead of replacing each time.~~
-- [ ] Change color assignments to predictable cycle from one color to another (breaking change).
+- [x] ~~Change color assignments to predictable cycle from one color to another (breaking change).~~
+- [ ] Ability to color non-latin tags
+- [ ] Optimization: calculating order in group must be better than O(n^2)
+- [ ] Optimization: remove outdated tags from config on start of plugin
+- [ ] Optimization: save already calculated palettes to avoid unnecessary computations
 
 ## Installation
 
