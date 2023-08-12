@@ -34,7 +34,6 @@ export default class ColoredTagsPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.tagsMap = new Map(Object.entries(this.settings.knownTags));
-		await this.saveKnownTags();
 
 		this.registerEvent(
 			this.app.workspace.on("editor-change", debounce(async () => {
@@ -50,8 +49,11 @@ export default class ColoredTagsPlugin extends Plugin {
 			}, 300, true))
 		);
 
-		this.addSettingTab(new ColoredTagsPluginSettingTab(this.app, this));
-		this.reload();
+		this.app.workspace.onLayoutReady(async () => {
+			await this.saveKnownTags();
+			this.addSettingTab(new ColoredTagsPluginSettingTab(this.app, this));
+			this.reload();
+		});
 	}
 
 	// O(n^2)
@@ -95,7 +97,8 @@ export default class ColoredTagsPlugin extends Plugin {
 	}
 
 	getTagsFromApp(): string[] {
-		return Object.keys(this.app.metadataCache.getTags())
+		const tagsArray = Object.keys(this.app.metadataCache.getTags());
+		return tagsArray
 			.map((tag) => {
 				return tag.replace(/#/g, "");
 			})
@@ -150,7 +153,6 @@ export default class ColoredTagsPlugin extends Plugin {
 				.toString({format: "lch"});
 
 		const color = darkenColorForContrast(background);
-
 		return {background, color};
 	}
 
@@ -175,8 +177,41 @@ export default class ColoredTagsPlugin extends Plugin {
 				background-color: ${backgroundDark};
 				color: ${colorDark};
 			}
-	`);
+		`);
+	}
 
+	findPaletteOffset(paletteConfig) {
+		function scoreOffset (value) {
+			const testingPalette = generateColorPalette({
+				...paletteConfig,
+				constantOffset: value
+			});
+
+			let prevColor = null;
+			return testingPalette.reduce((acc, col) => {
+				let score = 0;
+				if (prevColor) {
+					score = acc + new Color(col).contrast(prevColor, 'weber');
+				}
+
+				prevColor = col;
+				return score;
+			}, 0);
+		}
+
+		// More contrast means more difference in colors
+		let offset = 0;
+		let maxScore = 0;
+
+		for (let i = 0; i < 180; i++) {
+			const res = scoreOffset(i);
+			if (res >= maxScore) {
+				maxScore = res;
+				offset = i;
+			}
+		}
+
+		return offset;
 	}
 
 	generatePalettes() {
@@ -188,35 +223,12 @@ export default class ColoredTagsPlugin extends Plugin {
 			isShuffling: true
 		};
 
-		// More contrast means more difference in colors
-		let maxScore = 0;
-		let offset = 0;
-		for (let i = 0; i < 360; i++) {
-			const testingPalette = generateColorPalette({
-				isDarkTheme: false,
-				...commonPaletteConfig,
-				seed: 0,
-				isShuffling: false,
-				constantOffset: i
-			});
-
-			let prevColor = null;
-			const res = testingPalette.reduce((acc, col) => {
-				let score = 0;
-				if (prevColor) {
-					score = acc + new Color(col).contrast(new Color(prevColor), 'weber');
-				}
-
-				prevColor = col;
-				return score;
-			}, 0);
-
-
-			if (res > maxScore) {
-				maxScore = res;
-				offset = i;
-			}
-		}
+		const offset = this.findPaletteOffset({
+			...commonPaletteConfig,
+			isDarkTheme: false,
+			seed: 0,
+			isShuffling: false,
+		});
 
 		this.palettes = {
 			light: generateColorPalette({
@@ -256,31 +268,43 @@ export default class ColoredTagsPlugin extends Plugin {
 	}
 }
 
-function darkenColorForContrast(baseColor, contrast = 4.5) {
+const darkenMemoization = new Map();
+function darkenColorForContrast(baseColor) {
+	const CONTRAST = 4.5;
+	const memoizationKey = `${baseColor}`;
+	if (darkenMemoization.has(memoizationKey)) {
+		return darkenMemoization.get(memoizationKey);
+	}
+
 	const colorLight = new Color(baseColor).to("lch");
 	const colorDark = new Color(baseColor).to("lch");
 
 	colorLight.c += 3;
 	colorDark.c += 20;
 
+	let result = '#fff';
 	for (let i = 0; i < 100; i++) {
 		if (
 			colorLight.contrastAPCA(baseColor) >= 60 &&
-			colorLight.contrastWCAG21(baseColor) >= contrast
+			colorLight.contrastWCAG21(baseColor) >= CONTRAST
 		) {
-			return colorLight.toString();
+			result = colorLight.toString();
+			break;
 		}
 		if (
 			colorDark.contrastAPCA(baseColor) <= -60 &&
-			colorDark.contrastWCAG21(baseColor) >= contrast
+			colorDark.contrastWCAG21(baseColor) >= CONTRAST
 		) {
-			return colorDark.toString();
+			result = colorDark.toString();
+			break;
 		}
 
 		colorLight.l++;
 		colorDark.l--;
 	}
-	return "#fff";
+
+	darkenMemoization.set(memoizationKey, result);
+	return result;
 }
 
 
@@ -335,16 +359,26 @@ function generateColorPalette({isDarkTheme, paletteSize, baseChroma, baseLightne
 	return result;
 }
 
+let appendingCSSBuffer = [];
 function appendCSS(css: string): void {
-	let styleEl = document.head.querySelector('[colored-tags-style]');
-	if (!styleEl) {
-		styleEl = document.head
-			.createEl("style", {
-				type: "text/css",
-				attr: {"colored-tags-style": ""},
-			});
+	appendingCSSBuffer.push(css);
+	if (appendingCSSBuffer.length > 1) {
+		return;
 	}
-	styleEl.appendText(css);
+	// Delay DOM manipulation for next tick
+	Promise.resolve().then(() => {
+		let styleEl = document.head.querySelector('[colored-tags-style]');
+		if (!styleEl) {
+			styleEl = document.head
+				.createEl("style", {
+					type: "text/css",
+					attr: {"colored-tags-style": ""},
+				});
+		}
+		styleEl.appendText(appendingCSSBuffer.join('\n'));
+
+		appendingCSSBuffer = [];
+	});
 }
 
 function removeCSS(): void {

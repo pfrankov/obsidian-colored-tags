@@ -18,7 +18,7 @@ The colors are adjusted for the dark theme as well.
 - [ ] Optimization: save already calculated palettes to avoid unnecessary computations
 - [ ] Color blending must use only Hue property
 - [ ] First child's tag color must differ from its parent. It might be a good idea to make it also differ from next parent's color. So +2 should be enough (breaking change)
-- [ ] Optimization: speed up loading Obsidian by using Web Workers or delaying massive calculations
+- [x] ~~Optimization: speed up loading Obsidian by using Web Workers or delaying massive calculations~~
 - [ ] Optimization: temporary save all colors to avoid flashing tag's colors on start of Obsidian 
 
 ## Installation
