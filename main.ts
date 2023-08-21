@@ -1,5 +1,6 @@
 import {App, debounce, Plugin, PluginSettingTab, Setting} from "obsidian";
 import Color from "colorjs.io";
+import {coloredClassApplyerPlugin} from "./coloredClassApplyerPlugin";
 
 interface ColoredTagsPluginSettings {
 	chroma: number;
@@ -35,24 +36,26 @@ export default class ColoredTagsPlugin extends Plugin {
 		await this.loadSettings();
 		this.tagsMap = new Map(Object.entries(this.settings.knownTags));
 
-		this.registerEvent(
-			this.app.workspace.on("editor-change", debounce(async () => {
-				await this.saveKnownTags();
-				this.update();
-			}, 3000, true))
-		);
-
-		this.registerEvent(
-			this.app.workspace.on("active-leaf-change", debounce(async () => {
-				await this.saveKnownTags();
-				this.update();
-			}, 300, true))
-		);
-
 		this.app.workspace.onLayoutReady(async () => {
 			await this.saveKnownTags();
-			this.addSettingTab(new ColoredTagsPluginSettingTab(this.app, this));
 			this.reload();
+
+			this.registerEvent(
+				this.app.workspace.on("editor-change", debounce(async () => {
+					await this.saveKnownTags();
+					this.update();
+				}, 3000, true))
+			);
+
+			this.registerEvent(
+				this.app.workspace.on("active-leaf-change", debounce(async () => {
+					await this.saveKnownTags();
+					this.update();
+				}, 300, true))
+			);
+
+			this.addSettingTab(new ColoredTagsPluginSettingTab(this.app, this));
+			this.registerEditorExtension(coloredClassApplyerPlugin);
 		});
 	}
 
@@ -143,13 +146,13 @@ export default class ColoredTagsPlugin extends Plugin {
 					if (acc) {
 						return acc.mix(
 							colorFromPalette,
-							0.4
+							0.4,
+							{space: "lch"}
 						);
 					}
 					combinedTag = key;
-					return new Color(colorFromPalette);
+					return new Color(colorFromPalette).to('lch');
 				}, null)
-				?.to("lch")
 				.toString({format: "lch"});
 
 		const color = darkenColorForContrast(background);
@@ -162,18 +165,27 @@ export default class ColoredTagsPlugin extends Plugin {
 		const tagHref = "#" + tagName.replace(/\//g, "\\/");
 		const tagFlat = tagName.replace(/[^0-9a-z-]/ig, '');
 
-		if (!tagFlat) {
-			return;
-		}
-
 		const {background: backgroundLight, color: colorLight} = this.getColors(tagName, this.palettes.light);
 		const {background: backgroundDark, color: colorDark} = this.getColors(tagName, this.palettes.dark);
+
+		const selectors = [
+			`a.tag[href="${tagHref}"]`,
+			`.cm-s-obsidian .cm-line span.cm-hashtag.colored-tag-${tagName.replace(/\//g, "\\/")}`
+		];
+
+		if (tagFlat) {
+			selectors.push(`.cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag`)
+		}
+
+		const lightThemeSelectors = selectors.map(selector => 'body ' + selector);
+		const darkThemeSelectors = selectors.map(selector => 'body.theme-dark ' + selector);
+
 		appendCSS(`
-			body a.tag[href="${tagHref}"], body .cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag {
+			${lightThemeSelectors.join(', ')} {
 				background-color: ${backgroundLight};
 				color: ${colorLight};
 			}
-			body.theme-dark a.tag[href="${tagHref}"], body.theme-dark .cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag {
+			${darkThemeSelectors.join(', ')} {
 				background-color: ${backgroundDark};
 				color: ${colorDark};
 			}

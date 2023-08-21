@@ -12,12 +12,11 @@ The colors are adjusted for the dark theme as well.
 - [x] ~~Optimization: store existing, already calculated colors of tags. Render only new ones.~~
 - [x] ~~Optimization: append styles instead of replacing each time.~~
 - [x] ~~Change color assignments to predictable cycle from one color to another (breaking change).~~
-- [ ] Ability to color non-latin tags
+- [x] ~~Ability to color non-latin tags~~
 - [ ] Optimization: calculating order in group must be better than O(n^2)
 - [ ] Optimization: remove outdated tags from config on start of plugin
 - [ ] Optimization: save already calculated palettes to avoid unnecessary computations
-- [ ] Color blending must use only Hue property
-- [ ] First child's tag color must differ from its parent. It might be a good idea to make it also differ from next parent's color. So +2 should be enough (breaking change)
+- [x] ~~Color blending must use only Hue property~~
 - [x] ~~Optimization: speed up loading Obsidian by using Web Workers or delaying massive calculations~~
 - [ ] Optimization: temporary save all colors to avoid flashing tag's colors on start of Obsidian 
 
