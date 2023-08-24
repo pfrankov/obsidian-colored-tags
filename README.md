@@ -7,6 +7,10 @@ Colorizes tags in different colors. Colors of nested tags are mixed with parent 
 Text color contrast is automatically matched to comply with AA level of WCAG 2.1.
 The colors are adjusted for the dark theme as well.
 
+The main idea of the plugin is to make tags visually different from each other, so you should expect that the **colors may change with upcoming updates**.
+
+If you need to color individual tags, this plugin is not suitable.
+
 ## Roadmap
 - [x] ~~Settings for palette size, base chroma, and base lightness.~~
 - [x] ~~Optimization: store existing, already calculated colors of tags. Render only new ones.~~
