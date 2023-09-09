@@ -13,6 +13,9 @@ The main idea of the plugin is to make tags visually different from each other, 
 
 If you need to color individual tags, this plugin is not suitable.
 
+>**Limitations:**
+>- Properties tags can not be styled until fixes in Obsidian.
+
 ## Roadmap
 - [x] ~~Settings for palette size, base chroma, and base lightness.~~
 - [x] ~~Optimization: store existing, already calculated colors of tags. Render only new ones.~~
