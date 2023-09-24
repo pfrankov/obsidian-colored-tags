@@ -16,7 +16,7 @@ function coloredClassApplyer(domElement) {
 		tagElements.push({
 			el,
 			hashEl,
-			className: `colored-tag-${el.innerText.trim()}`
+			className: `colored-tag-${el.innerText.trim().toLowerCase()}`
 		});
 	});
 

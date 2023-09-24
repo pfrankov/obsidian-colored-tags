@@ -163,7 +163,7 @@ export default class ColoredTagsPlugin extends Plugin {
 		tagName = tagName.replace(/#/g, "");
 
 		const tagHref = "#" + tagName.replace(/\//g, "\\/");
-		const tagFlat = tagName.replace(/[^0-9a-z-]/ig, '');
+		const tagFlat = tagName.replace(/[^0-9a-z-]/ig, '').toLowerCase();
 
 		const {background: backgroundLight, color: colorLight} = this.getColors(tagName, this.palettes.light);
 		const {background: backgroundDark, color: colorDark} = this.getColors(tagName, this.palettes.dark);
