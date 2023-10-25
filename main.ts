@@ -11,6 +11,7 @@ interface ColoredTagsPluginSettings {
 		[name: string]: number
 	};
 	_version: number;
+	customColors?: string[];
 }
 
 const DEFAULT_SETTINGS: ColoredTagsPluginSettings = {
@@ -227,34 +228,41 @@ export default class ColoredTagsPlugin extends Plugin {
 	}
 
 	generatePalettes() {
-		const commonPaletteConfig = {
-			paletteSize: this.settings.palette,
-			baseChroma: this.settings.chroma,
-			baseLightness: this.settings.lightness,
-			seed: this.settings.seed,
-			isShuffling: true
-		};
+		if (this.settings.customColors && this.settings.customColors.length) {
+			this.palettes = {
+				light: this.settings.customColors,
+				dark: this.settings.customColors
+			};
+		} else {
+			const commonPaletteConfig = {
+				paletteSize: this.settings.palette,
+				baseChroma: this.settings.chroma,
+				baseLightness: this.settings.lightness,
+				seed: this.settings.seed,
+				isShuffling: true
+			};
 
-		const offset = this.findPaletteOffset({
-			...commonPaletteConfig,
-			isDarkTheme: false,
-			seed: 0,
-			isShuffling: false,
-		});
-
-		this.palettes = {
-			light: generateColorPalette({
+			const offset = this.findPaletteOffset({
+				...commonPaletteConfig,
 				isDarkTheme: false,
-				...commonPaletteConfig,
-				constantOffset: offset
+				seed: 0,
+				isShuffling: false,
+			});
 
-			}),
-			dark: generateColorPalette({
-				isDarkTheme: true,
-				...commonPaletteConfig,
-				constantOffset: offset
-			})
-		};
+			this.palettes = {
+				light: generateColorPalette({
+					isDarkTheme: false,
+					...commonPaletteConfig,
+					constantOffset: offset
+
+				}),
+				dark: generateColorPalette({
+					isDarkTheme: true,
+					...commonPaletteConfig,
+					constantOffset: offset
+				})
+			};
+		}
 	}
 
 	async loadSettings() {
@@ -495,5 +503,17 @@ class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					})
 			)
 
+		new Setting(containerEl)
+			.setName('Custom Colors')
+			.setDesc('Enter your custom colors separated by commas (e.g., #FF5733, #33D2FF).')
+			.addText(text => text
+				.setValue(this.plugin.settings.customColors ? this.plugin.settings.customColors.join(', ') : '')
+				.onChange(async (value) => {
+					const colors = value.split(',').map(color => color.trim());
+					this.plugin.settings.customColors = colors;
+					await this.plugin.saveSettings();
+					this.renderPalette(paletteEl);
+				})
+			);
 	}
 }
