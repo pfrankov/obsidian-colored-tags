@@ -265,8 +265,19 @@ export default class ColoredTagsPlugin extends Plugin {
 		}
 	}
 
+	isValidHexColor(hexString) {
+		return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hexString);
+	}
+
 	async loadSettings() {
 		const loadedData = await this.loadData();
+
+		if (loadedData && loadedData.customColors && loadedData.customColors.length) {
+			loadedData.customColors = loadedData.customColors.filter((color) => {
+				return this.isValidHexColor(color);
+			});
+		}
+
 		let needToSave = false;
 
 		if (loadedData && loadedData._version < 2) {
