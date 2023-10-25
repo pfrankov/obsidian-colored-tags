@@ -11,6 +11,7 @@ interface ColoredTagsPluginSettings {
 		[name: string]: number
 	};
 	_version: number;
+	enableCustomColors?: boolean;
 	customColors?: string[];
 }
 
@@ -21,6 +22,7 @@ const DEFAULT_SETTINGS: ColoredTagsPluginSettings = {
 	seed: 0,
 	knownTags: {},
 	_version: 2,
+	enableCustomColors: true,
 }
 
 export default class ColoredTagsPlugin extends Plugin {
@@ -228,7 +230,7 @@ export default class ColoredTagsPlugin extends Plugin {
 	}
 
 	generatePalettes() {
-		if (this.settings.customColors && this.settings.customColors.length) {
+		if (this.settings.enableCustomColors === true) {
 			this.palettes = {
 				light: this.settings.customColors,
 				dark: this.settings.customColors
@@ -443,20 +445,6 @@ class ColoredTagsPluginSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.setName('Palette size')
-			.setDesc('How many different colors are available.')
-			.addSlider(slider =>
-				slider.setLimits(8, 32, 8)
-					.setValue(this.plugin.settings.palette)
-					.onChange(async (value) => {
-						slider.showTooltip();
-						this.plugin.settings.palette = value;
-						await this.plugin.saveSettings();
-						this.renderPalette(paletteEl);
-					})
-			)
-
 		const paletteEl = containerEl.createEl("div", {
 			cls: "palette",
 			attr: {style: `display: flex; align-items: stretch`}
@@ -464,67 +452,96 @@ class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		this.renderPalette(paletteEl);
 
 		new Setting(containerEl)
-			.setName('Palette shift')
-			.setDesc('If the colors of some tags don\'t fit, you can shift the palette.')
-			.addSlider(slider =>
-				slider.setLimits(0, 10, 1)
-					.setValue(this.plugin.settings.seed)
-					.onChange(async (value) => {
-						slider.showTooltip();
-						this.plugin.settings.seed = value;
-						await this.plugin.saveSettings();
-						this.renderPalette(paletteEl);
-					})
-			)
-
-		new Setting(containerEl)
-			.setName('Saturation')
-			.addDropdown(dropdown =>
-				dropdown.addOption(String(DEFAULT_SETTINGS.chroma), 'Default')
-					.addOptions({
-						'5': 'Faded',
-						'32': 'Moderate',
-						'64': 'Vivid',
-						'128': 'Excessive',
-					})
-					.setValue(String(this.plugin.settings.chroma))
-					.onChange(async (value) => {
-						this.plugin.settings.chroma = Number(value);
-						await this.plugin.saveSettings();
-						this.renderPalette(paletteEl);
-					})
-			)
-
-		new Setting(containerEl)
-			.setName('Lightness')
-			.addDropdown(dropdown =>
-				dropdown.addOption(String(DEFAULT_SETTINGS.lightness), 'Default')
-					.addOptions({
-						'0': 'Dark',
-						'32': 'Medium Dark',
-						'64': 'Medium',
-						'90': 'Light',
-						'100': 'Bleach',
-					})
-					.setValue(String(this.plugin.settings.lightness))
-					.onChange(async (value) => {
-						this.plugin.settings.lightness = Number(value);
-						await this.plugin.saveSettings();
-						this.renderPalette(paletteEl);
-					})
-			)
-
-		new Setting(containerEl)
-			.setName('Custom Colors')
-			.setDesc('Enter your custom colors separated by commas (e.g., #FF5733, #33D2FF).')
-			.addText(text => text
-				.setValue(this.plugin.settings.customColors ? this.plugin.settings.customColors.join(', ') : '')
-				.onChange(async (value) => {
-					const colors = value.split(',').map(color => color.trim());
-					this.plugin.settings.customColors = colors;
-					await this.plugin.saveSettings();
+            .setName('Enable custom colors')
+            .setDesc('Ignore other pallet settings and use only custom colors.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableCustomColors)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableCustomColors = value;
+                    await this.plugin.saveSettings();
+					this.display();
 					this.renderPalette(paletteEl);
-				})
-			);
+                }));
+
+		if(this.plugin.settings.enableCustomColors !== true) {
+			new Setting(containerEl)
+				.setName('Palette size')
+				.setDesc('How many different colors are available.')
+				.addSlider(slider =>
+					slider.setLimits(8, 32, 8)
+						.setValue(this.plugin.settings.palette)
+						.onChange(async (value) => {
+							slider.showTooltip();
+							this.plugin.settings.palette = value;
+							await this.plugin.saveSettings();
+							this.renderPalette(paletteEl);
+						})
+				)
+
+			new Setting(containerEl)
+				.setName('Palette shift')
+				.setDesc('If the colors of some tags don\'t fit, you can shift the palette.')
+				.addSlider(slider =>
+					slider.setLimits(0, 10, 1)
+						.setValue(this.plugin.settings.seed)
+						.onChange(async (value) => {
+							slider.showTooltip();
+							this.plugin.settings.seed = value;
+							await this.plugin.saveSettings();
+							this.renderPalette(paletteEl);
+						})
+				)
+
+			new Setting(containerEl)
+				.setName('Saturation')
+				.addDropdown(dropdown =>
+					dropdown.addOption(String(DEFAULT_SETTINGS.chroma), 'Default')
+						.addOptions({
+							'5': 'Faded',
+							'32': 'Moderate',
+							'64': 'Vivid',
+							'128': 'Excessive',
+						})
+						.setValue(String(this.plugin.settings.chroma))
+						.onChange(async (value) => {
+							this.plugin.settings.chroma = Number(value);
+							await this.plugin.saveSettings();
+							this.renderPalette(paletteEl);
+						})
+				)
+
+			new Setting(containerEl)
+				.setName('Lightness')
+				.addDropdown(dropdown =>
+					dropdown.addOption(String(DEFAULT_SETTINGS.lightness), 'Default')
+						.addOptions({
+							'0': 'Dark',
+							'32': 'Medium Dark',
+							'64': 'Medium',
+							'90': 'Light',
+							'100': 'Bleach',
+						})
+						.setValue(String(this.plugin.settings.lightness))
+						.onChange(async (value) => {
+							this.plugin.settings.lightness = Number(value);
+							await this.plugin.saveSettings();
+							this.renderPalette(paletteEl);
+						})
+				)
+		}
+
+		if(this.plugin.settings.enableCustomColors === true) {
+			new Setting(containerEl)
+				.setDesc('Enter your custom colors separated by commas (e.g., #FF5733, #33D2FF).')
+				.addText(text => text
+					.setValue(this.plugin.settings.customColors ? this.plugin.settings.customColors.join(', ') : '')
+					.onChange(async (value) => {
+						const colors = value.split(',').map(color => color.trim());
+						this.plugin.settings.customColors = colors;
+						await this.plugin.saveSettings();
+						this.renderPalette(paletteEl);
+					})
+				);
+		}
 	}
 }
