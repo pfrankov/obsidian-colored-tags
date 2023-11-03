@@ -163,17 +163,18 @@ export default class ColoredTagsPlugin extends Plugin {
 		tagName = tagName.replace(/#/g, "");
 
 		const tagHref = "#" + tagName.replace(/\//g, "\\/");
-		const tagFlat = tagName.replace(/[^0-9a-z-]/ig, '').toLowerCase();
+		const tagFlat = tagName.replace(/[^0-9a-z-]/ig, '');
 
 		const {background: backgroundLight, color: colorLight} = this.getColors(tagName, this.palettes.light);
 		const {background: backgroundDark, color: colorDark} = this.getColors(tagName, this.palettes.dark);
 
 		const selectors = [
 			`a.tag[href="${tagHref}"]`,
-			`.cm-s-obsidian .cm-line span.cm-hashtag.colored-tag-${tagName.replace(/\//g, "\\/")}`
+			`.cm-s-obsidian .cm-line span.cm-hashtag.colored-tag-${tagName.toLowerCase().replace(/\//g, "\\/")}`
 		];
 
 		if (tagFlat) {
+			selectors.push(`.cm-s-obsidian .cm-line span.cm-tag-${tagFlat.toLowerCase()}.cm-hashtag`)
 			selectors.push(`.cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag`)
 		}
 

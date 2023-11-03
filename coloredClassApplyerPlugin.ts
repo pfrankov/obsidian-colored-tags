@@ -21,14 +21,16 @@ function coloredClassApplyer(domElement) {
 	});
 
 	tagElements.forEach(({el, hashEl, className}) => {
-		el.classList.forEach((cls) => {
+		el.classList.forEach((cls: string) => {
 			if (cls.startsWith('colored-tag-') && cls !== className) {
 				el.classList.remove(cls);
 				hashEl.classList.remove(cls);
 			}
 		});
-		el.classList.add(className);
-		hashEl.classList.add(className);
+		if (!el.classList.contains(className)) {
+			el.classList.add(className);
+			hashEl.classList.add(className);
+		}
 	});
 }
 
@@ -38,7 +40,6 @@ export const coloredClassApplyerPlugin = ViewPlugin.fromClass(class {
 	}
 
 	update(update: ViewUpdate) {
-		if (!(update.docChanged || update.focusChanged)) return
 		coloredClassApplyer(update.view.dom);
 	}
 });
