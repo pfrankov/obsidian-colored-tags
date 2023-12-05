@@ -1,6 +1,6 @@
 # Colored Tags Plugin for Obsidian
 
-<img width="700" alt="Demo" src="https://github.com/pfrankov/obsidian-colored-tags/assets/584632/03e3db9c-41f9-4fc7-ac2f-b599751cd809" />
+<img width="450" alt="Demo" src="https://github.com/pfrankov/obsidian-colored-tags/assets/584632/45f2e835-1887-4d07-80ea-dbcf84577a10" />
 
 <img width="700" alt="Settings" src="https://github.com/pfrankov/obsidian-colored-tags/assets/584632/466582ed-bed5-4244-8464-3a2b851f6023">
 
