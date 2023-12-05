@@ -1,4 +1,4 @@
-import {App, debounce, Plugin, PluginSettingTab, Setting} from "obsidian";
+import {App, debounce, Notice, Plugin, PluginSettingTab, Setting} from "obsidian";
 import Color from "colorjs.io";
 import {coloredClassApplyerPlugin} from "./coloredClassApplyerPlugin";
 
@@ -16,7 +16,7 @@ interface ColoredTagsPluginSettings {
 const DEFAULT_SETTINGS: ColoredTagsPluginSettings = {
 	chroma: 16,
 	lightness: 87,
-	palette: 16,
+	palette: 8,
 	seed: 0,
 	knownTags: {},
 	_version: 2,
@@ -132,31 +132,64 @@ export default class ColoredTagsPlugin extends Plugin {
 
 	getColors(
 		input: string,
-		palette,
-	): { background: string; color: string } {
+		palette: string[],
+	): { background: string; color: string, linearGradient: [] } {
 		const chunks = input.split("/");
 		let combinedTag = '';
-		const background =
-			chunks
-				.reduce((acc, chunk, i) => {
-					const key = [combinedTag, chunk].filter(Boolean).join('/');
-					const order = this.tagsMap.get(key) || 1;
-					const colorFromPalette = palette[(order - 1) % palette.length];
+		const gradientStops: { color: string, chunk: string }[] = [];
+		let backgroundColor: Color;
+		let lastColor = "";
 
-					if (acc) {
-						return acc.mix(
-							colorFromPalette,
-							0.4,
-							{space: "lch"}
-						);
-					}
-					combinedTag = key;
-					return new Color(colorFromPalette).to('lch');
-				}, null)
-				.toString({format: "lch"});
+		chunks.forEach((chunk) => {
+			const key = [combinedTag, chunk].filter(Boolean).join('/');
+			const order = this.tagsMap.get(key) || 1;
+			const filteredPalette = palette.filter(colorString => colorString !== lastColor);
+			const colorFromPalette = filteredPalette[(order - 1) % filteredPalette.length];
+			lastColor = colorFromPalette;
 
-		const color = darkenColorForContrast(background);
-		return {background, color};
+			let newColor;
+			if (backgroundColor) {
+				newColor = backgroundColor.mix(
+					colorFromPalette,
+					0.2,
+					{space: "lch"}
+				);
+				if (newColor.deltaE2000(backgroundColor) < 10) {
+					newColor = backgroundColor.mix(
+						colorFromPalette,
+						0.3,
+						{space: "lch"}
+					);
+
+				}
+			}
+			if (!backgroundColor) {
+				backgroundColor = new Color(colorFromPalette).to('lch');
+				combinedTag = key;
+				newColor = backgroundColor;
+			}
+
+			gradientStops.push({
+				color: newColor.toString({ format: 'lch' }),
+				chunk
+			});
+		});
+
+		const background = backgroundColor.toString({ format: 'lch' });
+
+		const defaultGap = 50;
+		const gap = defaultGap / gradientStops.length * 2;
+		const sumOfGaps = gap * (gradientStops.length - 1);
+		const elementSize = (100 - sumOfGaps) / gradientStops.length;
+
+		const linearGradient: string[] = gradientStops.map((item, index) => {
+			const start = index * (elementSize + gap);
+			const end = start + elementSize;
+			return `${item.color} ${start}% max(2em, ${end}%)`;
+		});
+
+		const color = darkenColorForContrast(backgroundColor);
+		return {background, color, linearGradient};
 	}
 
 	colorizeTag(tagName: string) {
@@ -165,8 +198,8 @@ export default class ColoredTagsPlugin extends Plugin {
 		const tagHref = "#" + tagName.replace(/\//g, "\\/");
 		const tagFlat = tagName.replace(/[^0-9a-z-]/ig, '');
 
-		const {background: backgroundLight, color: colorLight} = this.getColors(tagName, this.palettes.light);
-		const {background: backgroundDark, color: colorDark} = this.getColors(tagName, this.palettes.dark);
+		const {background: backgroundLight, color: colorLight, linearGradient: linearGradientLight} = this.getColors(tagName, this.palettes.light);
+		const {background: backgroundDark, color: colorDark, linearGradient: linearGradientDark } = this.getColors(tagName, this.palettes.dark);
 
 		const selectors = [
 			`a.tag[href="${tagHref}"]`,
@@ -181,14 +214,17 @@ export default class ColoredTagsPlugin extends Plugin {
 		const lightThemeSelectors = selectors.map(selector => 'body ' + selector);
 		const darkThemeSelectors = selectors.map(selector => 'body.theme-dark ' + selector);
 
+		const linearGradientRotation = '108deg';
 		appendCSS(`
 			${lightThemeSelectors.join(', ')} {
 				background-color: ${backgroundLight};
 				color: ${colorLight};
+				background-image: linear-gradient(${linearGradientRotation}, ${linearGradientLight.join(', ')});
 			}
 			${darkThemeSelectors.join(', ')} {
 				background-color: ${backgroundDark};
 				color: ${colorDark};
+				background-image: linear-gradient(${linearGradientRotation}, ${linearGradientDark.join(', ')});
 			}
 		`);
 	}
@@ -200,14 +236,15 @@ export default class ColoredTagsPlugin extends Plugin {
 				constantOffset: value
 			});
 
-			let prevColor = null;
+			let prevColor: Color = null;
 			return testingPalette.reduce((acc, col) => {
 				let score = 0;
+				const color = new Color(col).to('lch');
 				if (prevColor) {
-					score = acc + new Color(col).contrast(prevColor, 'weber');
+					score = acc + color.deltaE2000(prevColor);
 				}
 
-				prevColor = col;
+				prevColor = color;
 				return score;
 			}, 0);
 		}
@@ -403,6 +440,7 @@ function removeCSS(): void {
 
 class ColoredTagsPluginSettingTab extends PluginSettingTab {
 	plugin: ColoredTagsPlugin;
+	showExperimental = false;
 
 	constructor(app: App, plugin: ColoredTagsPlugin) {
 		super(app, plugin);
@@ -429,7 +467,7 @@ class ColoredTagsPluginSettingTab extends PluginSettingTab {
 			.setName('Palette size')
 			.setDesc('How many different colors are available.')
 			.addSlider(slider =>
-				slider.setLimits(8, 32, 8)
+				slider.setLimits(4, 12,  1)
 					.setValue(this.plugin.settings.palette)
 					.onChange(async (value) => {
 						slider.showTooltip();
@@ -459,42 +497,78 @@ class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					})
 			)
 
-		new Setting(containerEl)
-			.setName('Saturation')
-			.addDropdown(dropdown =>
-				dropdown.addOption(String(DEFAULT_SETTINGS.chroma), 'Default')
-					.addOptions({
-						'5': 'Faded',
-						'32': 'Moderate',
-						'64': 'Vivid',
-						'128': 'Excessive',
-					})
-					.setValue(String(this.plugin.settings.chroma))
-					.onChange(async (value) => {
-						this.plugin.settings.chroma = Number(value);
-						await this.plugin.saveSettings();
-						this.renderPalette(paletteEl);
-					})
-			)
+		const deprecationWarning = new Setting(containerEl)
+			.setName('🚨 Saturation and Lightness will be removed in next updates')
+			.setDesc('')
+
+		deprecationWarning.descEl.innerHTML = `They will be replaced by a select field with 2—3 presets.<br/>If you rely on these options please fill the form <a href="https://forms.gle/Aw6uaRJsr4seST8X6">https://forms.gle/Aw6uaRJsr4seST8X6</a>`
 
 		new Setting(containerEl)
-			.setName('Lightness')
-			.addDropdown(dropdown =>
-				dropdown.addOption(String(DEFAULT_SETTINGS.lightness), 'Default')
-					.addOptions({
-						'0': 'Dark',
-						'32': 'Medium Dark',
-						'64': 'Medium',
-						'90': 'Light',
-						'100': 'Bleach',
-					})
-					.setValue(String(this.plugin.settings.lightness))
-					.onChange(async (value) => {
-						this.plugin.settings.lightness = Number(value);
-						await this.plugin.saveSettings();
-						this.renderPalette(paletteEl);
-					})
+			.setHeading()
+			.setName('Experimental')
+			.setDesc('Dangerous actions or insanely unstable options that could be changed or removed in any time')
+			.addToggle(toggle =>
+				toggle.setValue(this.showExperimental).onChange(async (value) => {
+					this.showExperimental = value;
+					this.display();
+				})
 			)
 
+		if (this.showExperimental) {
+			new Setting(containerEl)
+				.setName('Saturation [Deprecated]')
+				.setDesc('The default value is the best')
+				.addDropdown(dropdown =>
+					dropdown.addOption(String(DEFAULT_SETTINGS.chroma), 'Default')
+						.addOptions({
+							'5': 'Faded',
+							'32': 'Moderate',
+							'64': 'Vivid',
+							'128': 'Excessive',
+						})
+						.setValue(String(this.plugin.settings.chroma))
+						.onChange(async (value) => {
+							this.plugin.settings.chroma = Number(value);
+							await this.plugin.saveSettings();
+							this.renderPalette(paletteEl);
+						})
+				)
+
+			new Setting(containerEl)
+				.setName('Lightness [Deprecated]')
+				.setDesc('The default value is the best')
+				.addDropdown(dropdown =>
+					dropdown.addOption(String(DEFAULT_SETTINGS.lightness), 'Default')
+						.addOptions({
+							'0': 'Dark',
+							'32': 'Medium Dark',
+							'64': 'Medium',
+							'90': 'Light',
+							'100': 'Bleach',
+						})
+						.setValue(String(this.plugin.settings.lightness))
+						.onChange(async (value) => {
+							this.plugin.settings.lightness = Number(value);
+							await this.plugin.saveSettings();
+							this.renderPalette(paletteEl);
+						})
+				)
+
+			new Setting(containerEl)
+				.setName('Reset config')
+				.setDesc('🚨 All colors of all tags will be recalculated as if it was the first launch of the plugin. Requires restart of Obsidian.')
+				.addButton(button =>
+					button.setButtonText('Reset')
+						.setClass('mod-warning')
+						.onClick(async () => {
+							new Notice(`✅ Reset is done\nPlease restart Obsidian`, 10000);
+							button.setDisabled(true);
+							button.buttonEl.setAttribute('disabled', 'true');
+							button.buttonEl.classList.remove('mod-warning');
+							this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS);
+							await this.plugin.saveData(this.plugin.settings);
+						})
+				)
+		}
 	}
 }

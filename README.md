@@ -1,17 +1,16 @@
 # Colored Tags Plugin for Obsidian
 
-![demo](https://github.com/pfrankov/obsidian-colored-tags/assets/584632/b85a2f12-8894-4a9d-992a-df3353a96754)
+<img width="700" alt="Demo" src="https://github.com/pfrankov/obsidian-colored-tags/assets/584632/03e3db9c-41f9-4fc7-ac2f-b599751cd809" />
 
+<img width="700" alt="Settings" src="https://github.com/pfrankov/obsidian-colored-tags/assets/584632/466582ed-bed5-4244-8464-3a2b851f6023">
 
-<img width="700" alt="Settings" src="https://github.com/pfrankov/obsidian-colored-tags/assets/584632/829b84da-ff37-460c-9daf-5b110c414fe3">
-
-Colorizes tags in different colors. Colors of nested tags are mixed with parent tags.
+Colorizes tags in different colors. Colors of nested tags are mixed with the root tag to improve readability.
 Text color contrast is automatically matched to comply with AA level of WCAG 2.1.
 The colors are adjusted for the dark theme as well.
 
 The main idea of the plugin is to make tags visually different from each other, so you should expect that the **colors may change with upcoming updates**.
 
-If you need to color individual tags, this plugin is not suitable.
+If you need to color individual tags, this plugin is not suitable. Try [Colored Tag Wrangler](https://github.com/code-of-chaos/obsidian-colored_tags_wrangler) instead.
 
 >**Limitations:**
 >- Properties tags can not be styled until fixes in Obsidian.
@@ -36,6 +35,9 @@ This plugin is available in the Obsidian community plugin store https://obsidian
 
 ### BRAT
 You can install this plugin via [BRAT](https://obsidian.md/plugins?id=obsidian42-brat): `pfrankov/obsidian-colored-tags`
+
+## My other Obsidian plugins
+- [Local GPT](https://github.com/pfrankov/obsidian-local-gpt) that assists with local AI for maximum privacy and offline access.
 
 ## Inspired by
 - [Colorful Tag plugin](https://github.com/rien7/obsidian-colorful-tag).
