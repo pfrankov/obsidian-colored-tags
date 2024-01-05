@@ -1,13 +1,13 @@
-import {debounce, Plugin} from "obsidian";
+import { debounce, Plugin } from "obsidian";
 import Color from "colorjs.io";
-import {coloredClassApplyerPlugin} from "./coloredClassApplyerPlugin";
-import {ColoredTagsPluginSettingTab} from "./ColoredTagsPluginSettingTab";
-import {DEFAULT_SETTINGS} from "./defaultSettings";
+import { coloredClassApplyerPlugin } from "./coloredClassApplyerPlugin";
+import { ColoredTagsPluginSettingTab } from "./ColoredTagsPluginSettingTab";
+import { DEFAULT_SETTINGS } from "./defaultSettings";
 import {
 	ColoredTagsPaletteType,
 	ColoredTagsPluginSettings,
 	ColorGeneratorConfig,
-	ColorProcessorConfig
+	ColorProcessorConfig,
 } from "./interfaces";
 
 export default class ColoredTagsPlugin extends Plugin {
@@ -17,8 +17,8 @@ export default class ColoredTagsPlugin extends Plugin {
 	settings: ColoredTagsPluginSettings;
 	palettes = {
 		light: [],
-		dark: []
-	}
+		dark: [],
+	};
 
 	async onload() {
 		await this.loadSettings();
@@ -29,17 +29,31 @@ export default class ColoredTagsPlugin extends Plugin {
 			this.reload();
 
 			this.registerEvent(
-				this.app.workspace.on("editor-change", debounce(async () => {
-					await this.saveKnownTags();
-					this.update();
-				}, 3000, true))
+				this.app.workspace.on(
+					"editor-change",
+					debounce(
+						async () => {
+							await this.saveKnownTags();
+							this.update();
+						},
+						3000,
+						true,
+					),
+				),
 			);
 
 			this.registerEvent(
-				this.app.workspace.on("active-leaf-change", debounce(async () => {
-					await this.saveKnownTags();
-					this.update();
-				}, 300, true))
+				this.app.workspace.on(
+					"active-leaf-change",
+					debounce(
+						async () => {
+							await this.saveKnownTags();
+							this.update();
+						},
+						300,
+						true,
+					),
+				),
 			);
 
 			this.addSettingTab(new ColoredTagsPluginSettingTab(this.app, this));
@@ -49,7 +63,7 @@ export default class ColoredTagsPlugin extends Plugin {
 
 	// O(n^2)
 	// Need to be optimized
-	async saveKnownTags () {
+	async saveKnownTags() {
 		let isNeedToSave = false;
 
 		const combinedSet = new Set(this.tagsMap.keys());
@@ -58,14 +72,17 @@ export default class ColoredTagsPlugin extends Plugin {
 		});
 		const combinedTags = Array.from(combinedSet);
 		combinedTags.forEach((tag, index) => {
-			const chunks = tag.split('/');
+			const chunks = tag.split("/");
 
-			let combinedTag = '';
+			let combinedTag = "";
 			chunks.forEach((chunk, chunkIndex) => {
-				const key = [combinedTag, chunk].filter(Boolean).join('/');
+				const key = [combinedTag, chunk].filter(Boolean).join("/");
 				if (!this.tagsMap.has(key)) {
 					const siblings = combinedTags.filter((keyd) => {
-						return keyd.split('/').length === chunkIndex + 1 && keyd.startsWith(combinedTag);
+						return (
+							keyd.split("/").length === chunkIndex + 1 &&
+							keyd.startsWith(combinedTag)
+						);
 					});
 
 					const maxValue = siblings.reduce((acc, sibling) => {
@@ -74,7 +91,6 @@ export default class ColoredTagsPlugin extends Plugin {
 
 					this.tagsMap.set(key, maxValue + 1);
 					isNeedToSave = true;
-
 				}
 
 				combinedTag = key;
@@ -82,7 +98,9 @@ export default class ColoredTagsPlugin extends Plugin {
 		});
 
 		if (isNeedToSave) {
-			this.settings.knownTags = Object.fromEntries(this.tagsMap.entries());
+			this.settings.knownTags = Object.fromEntries(
+				this.tagsMap.entries(),
+			);
 			await this.saveData(this.settings);
 		}
 	}
@@ -123,19 +141,22 @@ export default class ColoredTagsPlugin extends Plugin {
 		palette: string[],
 		isMixing: boolean,
 		isTransition: boolean,
-		highTextContrast: boolean
-	): { background: string; color: string, linearGradient: [] } {
+		highTextContrast: boolean,
+	): { background: string; color: string; linearGradient: [] } {
 		const chunks = input.split("/");
-		let combinedTag = '';
-		const gradientStops: { color: string, chunk: string }[] = [];
+		let combinedTag = "";
+		const gradientStops: { color: string; chunk: string }[] = [];
 		let backgroundColor: Color;
 		let lastColor = "";
 
 		chunks.forEach((chunk) => {
-			const key = [combinedTag, chunk].filter(Boolean).join('/');
+			const key = [combinedTag, chunk].filter(Boolean).join("/");
 			const order = this.tagsMap.get(key) || 1;
-			const filteredPalette = palette.filter(colorString => colorString !== lastColor);
-			const colorFromPalette = filteredPalette[(order - 1) % filteredPalette.length];
+			const filteredPalette = palette.filter(
+				(colorString) => colorString !== lastColor,
+			);
+			const colorFromPalette =
+				filteredPalette[(order - 1) % filteredPalette.length];
 			lastColor = colorFromPalette;
 
 			let newColor;
@@ -146,36 +167,35 @@ export default class ColoredTagsPlugin extends Plugin {
 					newColor = backgroundColor.mix(
 						colorFromPalette,
 						mixingLevel,
-						{space: "lch"}
+						{ space: "lch" },
 					);
 					if (newColor.deltaE2000(backgroundColor) < 10) {
 						newColor = backgroundColor.mix(
 							colorFromPalette,
 							mixingLevel + 0.1,
-							{space: "lch"}
+							{ space: "lch" },
 						);
-
 					}
 				} else {
-					newColor = new Color(colorFromPalette).to('lch');
+					newColor = new Color(colorFromPalette).to("lch");
 				}
 			}
 			if (!backgroundColor) {
-				backgroundColor = new Color(colorFromPalette).to('lch');
+				backgroundColor = new Color(colorFromPalette).to("lch");
 				combinedTag = key;
 				newColor = backgroundColor;
 			}
 
 			gradientStops.push({
-				color: newColor.toString({ format: 'lch' }),
-				chunk
+				color: newColor.toString({ format: "lch" }),
+				chunk,
 			});
 		});
 
-		const background = backgroundColor.toString({ format: 'lch' });
+		const background = backgroundColor.toString({ format: "lch" });
 
 		const defaultGap = isTransition ? 50 : 0;
-		const gap = defaultGap / gradientStops.length * 2;
+		const gap = (defaultGap / gradientStops.length) * 2;
 		const sumOfGaps = gap * (gradientStops.length - 1);
 		const elementSize = (100 - sumOfGaps) / gradientStops.length;
 
@@ -187,52 +207,90 @@ export default class ColoredTagsPlugin extends Plugin {
 
 		let color;
 		if (highTextContrast) {
-			const whiteColor = new Color('white');
-			const blackColor = new Color('black');
-			const onWhite = Math.abs(backgroundColor.contrast(whiteColor, 'APCA'));
-			const onBlack = Math.abs(backgroundColor.contrast(blackColor, 'APCA'));
+			const whiteColor = new Color("white");
+			const blackColor = new Color("black");
+			const onWhite = Math.abs(
+				backgroundColor.contrast(whiteColor, "APCA"),
+			);
+			const onBlack = Math.abs(
+				backgroundColor.contrast(blackColor, "APCA"),
+			);
 
 			color = onWhite > onBlack ? whiteColor : blackColor;
 		} else {
 			color = darkenColorForContrast(backgroundColor);
 		}
 
-		return {background, color, linearGradient};
+		return { background, color, linearGradient };
 	}
 
 	colorizeTag(tagName: string) {
 		tagName = tagName.replace(/#/g, "");
 
 		const tagHref = "#" + tagName.replace(/\//g, "\\/");
-		const tagFlat = tagName.replace(/[^0-9a-z-]/ig, '');
+		const tagFlat = tagName.replace(/[^0-9a-z-]/gi, "");
 
-		const {background: backgroundLight, color: colorLight, linearGradient: linearGradientLight} = this.getColors(tagName, this.palettes.light, this.settings.mixColors, this.settings.transition, this.settings.accessibility.highTextContrast);
-		const {background: backgroundDark, color: colorDark, linearGradient: linearGradientDark } = this.getColors(tagName, this.palettes.dark, this.settings.mixColors, this.settings.transition, this.settings.accessibility.highTextContrast);
+		const {
+			background: backgroundLight,
+			color: colorLight,
+			linearGradient: linearGradientLight,
+		} = this.getColors(
+			tagName,
+			this.palettes.light,
+			this.settings.mixColors,
+			this.settings.transition,
+			this.settings.accessibility.highTextContrast,
+		);
+		const {
+			background: backgroundDark,
+			color: colorDark,
+			linearGradient: linearGradientDark,
+		} = this.getColors(
+			tagName,
+			this.palettes.dark,
+			this.settings.mixColors,
+			this.settings.transition,
+			this.settings.accessibility.highTextContrast,
+		);
 
 		const selectors = [
 			`a.tag[href="${tagHref}"]`,
-			`.cm-s-obsidian .cm-line span.cm-hashtag.colored-tag-${tagName.toLowerCase().replace(/\//g, "\\/")}`
+			`.cm-s-obsidian .cm-line span.cm-hashtag.colored-tag-${tagName
+				.toLowerCase()
+				.replace(/\//g, "\\/")}`,
 		];
 
 		if (tagFlat) {
-			selectors.push(`.cm-s-obsidian .cm-line span.cm-tag-${tagFlat.toLowerCase()}.cm-hashtag`)
-			selectors.push(`.cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag`)
+			selectors.push(
+				`.cm-s-obsidian .cm-line span.cm-tag-${tagFlat.toLowerCase()}.cm-hashtag`,
+			);
+			selectors.push(
+				`.cm-s-obsidian .cm-line span.cm-tag-${tagFlat}.cm-hashtag`,
+			);
 		}
 
-		const lightThemeSelectors = selectors.map(selector => 'body ' + selector);
-		const darkThemeSelectors = selectors.map(selector => 'body.theme-dark ' + selector);
+		const lightThemeSelectors = selectors.map(
+			(selector) => "body " + selector,
+		);
+		const darkThemeSelectors = selectors.map(
+			(selector) => "body.theme-dark " + selector,
+		);
 
-		const linearGradientRotation = '108deg';
+		const linearGradientRotation = "108deg";
 		appendCSS(`
-			${lightThemeSelectors.join(', ')} {
+			${lightThemeSelectors.join(", ")} {
 				background-color: ${backgroundLight};
 				color: ${colorLight};
-				background-image: linear-gradient(${linearGradientRotation}, ${linearGradientLight.join(', ')});
+				background-image: linear-gradient(${linearGradientRotation}, ${linearGradientLight.join(
+					", ",
+				)});
 			}
-			${darkThemeSelectors.join(', ')} {
+			${darkThemeSelectors.join(", ")} {
 				background-color: ${backgroundDark};
 				color: ${colorDark};
-				background-image: linear-gradient(${linearGradientRotation}, ${linearGradientDark.join(', ')});
+				background-image: linear-gradient(${linearGradientRotation}, ${linearGradientDark.join(
+					", ",
+				)});
 			}
 		`);
 	}
@@ -240,7 +298,10 @@ export default class ColoredTagsPlugin extends Plugin {
 	generatePalettes() {
 		if (this.settings.palette.selected === ColoredTagsPaletteType.CUSTOM) {
 			const paletteString = this.settings.palette.custom;
-			const palette = paletteString.split('-').filter(Boolean).map(str => `#${str}`);
+			const palette = paletteString
+				.split("-")
+				.filter(Boolean)
+				.map((str) => `#${str}`);
 
 			if (palette) {
 				this.palettes = {
@@ -253,8 +314,8 @@ export default class ColoredTagsPlugin extends Plugin {
 						isDarkTheme: true,
 						palette,
 						seed: this.settings.palette.seed,
-					})
-				}
+					}),
+				};
 				return;
 			}
 		}
@@ -263,7 +324,10 @@ export default class ColoredTagsPlugin extends Plugin {
 		let baseLightness = 87;
 		let offset = 35;
 
-		if (this.settings.palette.selected === ColoredTagsPaletteType.ADAPTIVE_BRIGHT) {
+		if (
+			this.settings.palette.selected ===
+			ColoredTagsPaletteType.ADAPTIVE_BRIGHT
+		) {
 			baseChroma = 85;
 			baseLightness = 75;
 		}
@@ -280,14 +344,13 @@ export default class ColoredTagsPlugin extends Plugin {
 			light: generateAdaptiveColorPalette({
 				isDarkTheme: false,
 				...commonPaletteConfig,
-				constantOffset: offset
-
+				constantOffset: offset,
 			}),
 			dark: generateAdaptiveColorPalette({
 				isDarkTheme: true,
 				...commonPaletteConfig,
-				constantOffset: offset
-			})
+				constantOffset: offset,
+			}),
 		};
 	}
 
@@ -309,11 +372,12 @@ export default class ColoredTagsPlugin extends Plugin {
 
 			loadedData.palette = {
 				...DEFAULT_SETTINGS.palette,
-				seed: loadedData.seed
-			}
+				seed: loadedData.seed,
+			};
 
 			if (loadedData.chroma > 16 || loadedData.lightness > 87) {
-				loadedData.palette.selected = ColoredTagsPaletteType.ADAPTIVE_BRIGHT;
+				loadedData.palette.selected =
+					ColoredTagsPaletteType.ADAPTIVE_BRIGHT;
 			}
 
 			delete loadedData.chroma;
@@ -356,7 +420,7 @@ function darkenColorForContrast(baseColor) {
 		colorDark.c = 100;
 	}
 
-	let result = '#fff';
+	let result = "#fff";
 	for (let i = 0; i < 100; i++) {
 		if (
 			baseColor.contrastAPCA(colorLight) <= -60 &&
@@ -381,8 +445,15 @@ function darkenColorForContrast(baseColor) {
 	return result;
 }
 
-
-function generateAdaptiveColorPalette({isDarkTheme, paletteSize, baseChroma, baseLightness, constantOffset, isShuffling, seed}: ColorGeneratorConfig) {
+function generateAdaptiveColorPalette({
+	isDarkTheme,
+	paletteSize,
+	baseChroma,
+	baseLightness,
+	constantOffset,
+	isShuffling,
+	seed,
+}: ColorGeneratorConfig) {
 	const hueIncrement = 360 / paletteSize;
 
 	const availableColors = [];
@@ -397,7 +468,11 @@ function generateAdaptiveColorPalette({isDarkTheme, paletteSize, baseChroma, bas
 			lightness = Math.min(Math.round(baseLightness / 2.5), 100);
 		}
 
-		const lchColor = new Color("lch", [lightness, chroma, hue % 360]).toString();
+		const lchColor = new Color("lch", [
+			lightness,
+			chroma,
+			hue % 360,
+		]).toString();
 		availableColors.push(lchColor);
 	}
 
@@ -412,7 +487,9 @@ function generateAdaptiveColorPalette({isDarkTheme, paletteSize, baseChroma, bas
 	while (result.length < len) {
 		result.push(availableColors[next]);
 		availableColors.splice(next, 1);
-		next = Math.round((next + availableColors.length / 3)) % availableColors.length;
+		next =
+			Math.round(next + availableColors.length / 3) %
+			availableColors.length;
 	}
 
 	const cut = result.splice(-seed, seed);
@@ -420,11 +497,15 @@ function generateAdaptiveColorPalette({isDarkTheme, paletteSize, baseChroma, bas
 
 	return result;
 }
-function processColorPalette({isDarkTheme, palette, seed}: ColorProcessorConfig) {
+function processColorPalette({
+	isDarkTheme,
+	palette,
+	seed,
+}: ColorProcessorConfig) {
 	const availableColors = [];
 
 	for (const item of palette) {
-		availableColors.push(new Color(item).to('lch').toString());
+		availableColors.push(new Color(item).to("lch").toString());
 	}
 
 	const result = availableColors;
@@ -443,24 +524,21 @@ function appendCSS(css: string): void {
 	}
 	// Delay DOM manipulation for next tick
 	Promise.resolve().then(() => {
-		let styleEl = document.head.querySelector('[colored-tags-style]');
+		let styleEl = document.head.querySelector("[colored-tags-style]");
 		if (!styleEl) {
-			styleEl = document.head
-				.createEl("style", {
-					type: "text/css",
-					attr: {"colored-tags-style": ""},
-				});
+			styleEl = document.head.createEl("style", {
+				type: "text/css",
+				attr: { "colored-tags-style": "" },
+			});
 		}
-		styleEl.appendText(appendingCSSBuffer.join('\n'));
+		styleEl.appendText(appendingCSSBuffer.join("\n"));
 
 		appendingCSSBuffer = [];
 	});
 }
 
 function removeCSS(): void {
-	document.head.querySelectorAll('[colored-tags-style]').forEach((el) => {
+	document.head.querySelectorAll("[colored-tags-style]").forEach((el) => {
 		el.remove();
 	});
 }
-
-

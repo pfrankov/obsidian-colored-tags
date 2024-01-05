@@ -10,7 +10,7 @@ export interface ColoredTagsPluginSettings {
 		highTextContrast: boolean;
 	};
 	knownTags: {
-		[name: string]: number
+		[name: string]: number;
 	};
 	_version: number;
 }
@@ -20,7 +20,7 @@ export interface ColorGeneratorConfig {
 	paletteSize: number;
 	baseChroma: number;
 	baseLightness: number;
-	seed: number,
+	seed: number;
 	isShuffling: boolean;
 	constantOffset: number;
 }
@@ -28,13 +28,11 @@ export interface ColorGeneratorConfig {
 export interface ColorProcessorConfig {
 	isDarkTheme: boolean;
 	palette: string[];
-	seed: number,
+	seed: number;
 }
 
-
-
 export const enum ColoredTagsPaletteType {
-	ADAPTIVE_SOFT = 'adaptive-soft',
-	ADAPTIVE_BRIGHT = 'adaptive-bright',
-	CUSTOM = 'custom'
+	ADAPTIVE_SOFT = "adaptive-soft",
+	ADAPTIVE_BRIGHT = "adaptive-bright",
+	CUSTOM = "custom",
 }
