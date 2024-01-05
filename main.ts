@@ -1,26 +1,14 @@
-import {App, debounce, Notice, Plugin, PluginSettingTab, Setting} from "obsidian";
+import {debounce, Plugin} from "obsidian";
 import Color from "colorjs.io";
 import {coloredClassApplyerPlugin} from "./coloredClassApplyerPlugin";
-
-interface ColoredTagsPluginSettings {
-	chroma: number;
-	lightness: number;
-	palette: number;
-	seed: number;
-	knownTags: {
-		[name: string]: number
-	};
-	_version: number;
-}
-
-const DEFAULT_SETTINGS: ColoredTagsPluginSettings = {
-	chroma: 16,
-	lightness: 87,
-	palette: 8,
-	seed: 0,
-	knownTags: {},
-	_version: 2,
-}
+import {ColoredTagsPluginSettingTab} from "./ColoredTagsPluginSettingTab";
+import {DEFAULT_SETTINGS} from "./defaultSettings";
+import {
+	ColoredTagsPaletteType,
+	ColoredTagsPluginSettings,
+	ColorGeneratorConfig,
+	ColorProcessorConfig
+} from "./interfaces";
 
 export default class ColoredTagsPlugin extends Plugin {
 	renderedTagsSet: Set<string> = new Set();
@@ -133,6 +121,9 @@ export default class ColoredTagsPlugin extends Plugin {
 	getColors(
 		input: string,
 		palette: string[],
+		isMixing: boolean,
+		isTransition: boolean,
+		highTextContrast: boolean
 	): { background: string; color: string, linearGradient: [] } {
 		const chunks = input.split("/");
 		let combinedTag = '';
@@ -149,18 +140,24 @@ export default class ColoredTagsPlugin extends Plugin {
 
 			let newColor;
 			if (backgroundColor) {
-				newColor = backgroundColor.mix(
-					colorFromPalette,
-					0.2,
-					{space: "lch"}
-				);
-				if (newColor.deltaE2000(backgroundColor) < 10) {
+				if (isMixing) {
+					const mixingLevel = isTransition ? 0.5 : 0.4;
+
 					newColor = backgroundColor.mix(
 						colorFromPalette,
-						0.3,
+						mixingLevel,
 						{space: "lch"}
 					);
+					if (newColor.deltaE2000(backgroundColor) < 10) {
+						newColor = backgroundColor.mix(
+							colorFromPalette,
+							mixingLevel + 0.1,
+							{space: "lch"}
+						);
 
+					}
+				} else {
+					newColor = new Color(colorFromPalette).to('lch');
 				}
 			}
 			if (!backgroundColor) {
@@ -177,7 +174,7 @@ export default class ColoredTagsPlugin extends Plugin {
 
 		const background = backgroundColor.toString({ format: 'lch' });
 
-		const defaultGap = 50;
+		const defaultGap = isTransition ? 50 : 0;
 		const gap = defaultGap / gradientStops.length * 2;
 		const sumOfGaps = gap * (gradientStops.length - 1);
 		const elementSize = (100 - sumOfGaps) / gradientStops.length;
@@ -188,7 +185,18 @@ export default class ColoredTagsPlugin extends Plugin {
 			return `${item.color} ${start}% max(2em, ${end}%)`;
 		});
 
-		const color = darkenColorForContrast(backgroundColor);
+		let color;
+		if (highTextContrast) {
+			const whiteColor = new Color('white');
+			const blackColor = new Color('black');
+			const onWhite = Math.abs(backgroundColor.contrast(whiteColor, 'APCA'));
+			const onBlack = Math.abs(backgroundColor.contrast(blackColor, 'APCA'));
+
+			color = onWhite > onBlack ? whiteColor : blackColor;
+		} else {
+			color = darkenColorForContrast(backgroundColor);
+		}
+
 		return {background, color, linearGradient};
 	}
 
@@ -198,8 +206,8 @@ export default class ColoredTagsPlugin extends Plugin {
 		const tagHref = "#" + tagName.replace(/\//g, "\\/");
 		const tagFlat = tagName.replace(/[^0-9a-z-]/ig, '');
 
-		const {background: backgroundLight, color: colorLight, linearGradient: linearGradientLight} = this.getColors(tagName, this.palettes.light);
-		const {background: backgroundDark, color: colorDark, linearGradient: linearGradientDark } = this.getColors(tagName, this.palettes.dark);
+		const {background: backgroundLight, color: colorLight, linearGradient: linearGradientLight} = this.getColors(tagName, this.palettes.light, this.settings.mixColors, this.settings.transition, this.settings.accessibility.highTextContrast);
+		const {background: backgroundDark, color: colorDark, linearGradient: linearGradientDark } = this.getColors(tagName, this.palettes.dark, this.settings.mixColors, this.settings.transition, this.settings.accessibility.highTextContrast);
 
 		const selectors = [
 			`a.tag[href="${tagHref}"]`,
@@ -229,65 +237,53 @@ export default class ColoredTagsPlugin extends Plugin {
 		`);
 	}
 
-	findPaletteOffset(paletteConfig) {
-		function scoreOffset (value) {
-			const testingPalette = generateColorPalette({
-				...paletteConfig,
-				constantOffset: value
-			});
+	generatePalettes() {
+		if (this.settings.palette.selected === ColoredTagsPaletteType.CUSTOM) {
+			const paletteString = this.settings.palette.custom;
+			const palette = paletteString.split('-').filter(Boolean).map(str => `#${str}`);
 
-			let prevColor: Color = null;
-			return testingPalette.reduce((acc, col) => {
-				let score = 0;
-				const color = new Color(col).to('lch');
-				if (prevColor) {
-					score = acc + color.deltaE2000(prevColor);
+			if (palette) {
+				this.palettes = {
+					light: processColorPalette({
+						isDarkTheme: false,
+						palette,
+						seed: this.settings.palette.seed,
+					}),
+					dark: processColorPalette({
+						isDarkTheme: true,
+						palette,
+						seed: this.settings.palette.seed,
+					})
 				}
-
-				prevColor = color;
-				return score;
-			}, 0);
-		}
-
-		// More contrast means more difference in colors
-		let offset = 0;
-		let maxScore = 0;
-
-		for (let i = 0; i < 180; i++) {
-			const res = scoreOffset(i);
-			if (res >= maxScore) {
-				maxScore = res;
-				offset = i;
+				return;
 			}
 		}
 
-		return offset;
-	}
+		let baseChroma = 16;
+		let baseLightness = 87;
+		let offset = 35;
 
-	generatePalettes() {
+		if (this.settings.palette.selected === ColoredTagsPaletteType.ADAPTIVE_BRIGHT) {
+			baseChroma = 85;
+			baseLightness = 75;
+		}
+
 		const commonPaletteConfig = {
-			paletteSize: this.settings.palette,
-			baseChroma: this.settings.chroma,
-			baseLightness: this.settings.lightness,
-			seed: this.settings.seed,
-			isShuffling: true
+			paletteSize: 8,
+			seed: this.settings.palette.seed,
+			isShuffling: true,
+			baseChroma,
+			baseLightness,
 		};
 
-		const offset = this.findPaletteOffset({
-			...commonPaletteConfig,
-			isDarkTheme: false,
-			seed: 0,
-			isShuffling: false,
-		});
-
 		this.palettes = {
-			light: generateColorPalette({
+			light: generateAdaptiveColorPalette({
 				isDarkTheme: false,
 				...commonPaletteConfig,
 				constantOffset: offset
 
 			}),
-			dark: generateColorPalette({
+			dark: generateAdaptiveColorPalette({
 				isDarkTheme: true,
 				...commonPaletteConfig,
 				constantOffset: offset
@@ -299,12 +295,33 @@ export default class ColoredTagsPlugin extends Plugin {
 		const loadedData = await this.loadData();
 		let needToSave = false;
 
+		// Migration
 		if (loadedData && loadedData._version < 2) {
 			needToSave = true;
 
 			loadedData.palette = 16;
 			loadedData._version = 2;
 		}
+		if (loadedData && loadedData._version < 3) {
+			needToSave = true;
+
+			delete loadedData.palette;
+
+			loadedData.palette = {
+				...DEFAULT_SETTINGS.palette,
+				seed: loadedData.seed
+			}
+
+			if (loadedData.chroma > 16 || loadedData.lightness > 87) {
+				loadedData.palette.selected = ColoredTagsPaletteType.ADAPTIVE_BRIGHT;
+			}
+
+			delete loadedData.chroma;
+			delete loadedData.lightness;
+			delete loadedData.seed;
+			loadedData._version = 3;
+		}
+
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
 
 		if (needToSave) {
@@ -332,17 +349,24 @@ function darkenColorForContrast(baseColor) {
 	colorLight.c += 3;
 	colorDark.c += 20;
 
+	if (colorLight.c > 100) {
+		colorLight.c = 100;
+	}
+	if (colorDark.c > 100) {
+		colorDark.c = 100;
+	}
+
 	let result = '#fff';
 	for (let i = 0; i < 100; i++) {
 		if (
-			colorLight.contrastAPCA(baseColor) >= 60 &&
+			baseColor.contrastAPCA(colorLight) <= -60 &&
 			colorLight.contrastWCAG21(baseColor) >= CONTRAST
 		) {
 			result = colorLight.toString();
 			break;
 		}
 		if (
-			colorDark.contrastAPCA(baseColor) <= -60 &&
+			baseColor.contrastAPCA(colorDark) >= 60 &&
 			colorDark.contrastWCAG21(baseColor) >= CONTRAST
 		) {
 			result = colorDark.toString();
@@ -358,19 +382,7 @@ function darkenColorForContrast(baseColor) {
 }
 
 
-
-
-interface ColorGeneratorConfig {
-	isDarkTheme: boolean;
-	paletteSize: number;
-	baseChroma: number;
-	baseLightness: number;
-	seed: number,
-	isShuffling: boolean;
-	constantOffset: number;
-}
-
-function generateColorPalette({isDarkTheme, paletteSize, baseChroma, baseLightness, constantOffset, isShuffling, seed}: ColorGeneratorConfig) {
+function generateAdaptiveColorPalette({isDarkTheme, paletteSize, baseChroma, baseLightness, constantOffset, isShuffling, seed}: ColorGeneratorConfig) {
 	const hueIncrement = 360 / paletteSize;
 
 	const availableColors = [];
@@ -381,8 +393,8 @@ function generateColorPalette({isDarkTheme, paletteSize, baseChroma, baseLightne
 		let chroma = baseChroma;
 		let lightness = baseLightness;
 		if (isDarkTheme) {
-			chroma = Math.round(baseChroma * 1.8);
-			lightness = Math.round(baseLightness / 2.5);
+			chroma = Math.min(Math.round(baseChroma * 1.8), 100);
+			lightness = Math.min(Math.round(baseLightness / 2.5), 100);
 		}
 
 		const lchColor = new Color("lch", [lightness, chroma, hue % 360]).toString();
@@ -402,6 +414,20 @@ function generateColorPalette({isDarkTheme, paletteSize, baseChroma, baseLightne
 		availableColors.splice(next, 1);
 		next = Math.round((next + availableColors.length / 3)) % availableColors.length;
 	}
+
+	const cut = result.splice(-seed, seed);
+	result.splice(0, 0, ...cut);
+
+	return result;
+}
+function processColorPalette({isDarkTheme, palette, seed}: ColorProcessorConfig) {
+	const availableColors = [];
+
+	for (const item of palette) {
+		availableColors.push(new Color(item).to('lch').toString());
+	}
+
+	const result = availableColors;
 
 	const cut = result.splice(-seed, seed);
 	result.splice(0, 0, ...cut);
@@ -438,137 +464,3 @@ function removeCSS(): void {
 }
 
 
-class ColoredTagsPluginSettingTab extends PluginSettingTab {
-	plugin: ColoredTagsPlugin;
-	showExperimental = false;
-
-	constructor(app: App, plugin: ColoredTagsPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	renderPalette(paletteEl: Node) {
-		paletteEl.empty();
-		let palette = this.plugin.palettes.light;
-		if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-			palette = this.plugin.palettes.dark;
-		}
-		palette.forEach((paletteColor) => {
-			paletteEl.createEl("div", {attr: {style: `flex: 1; height: 20px; background-color: ${paletteColor}`}});
-		});
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Palette size')
-			.setDesc('How many different colors are available.')
-			.addSlider(slider =>
-				slider.setLimits(4, 12,  1)
-					.setValue(this.plugin.settings.palette)
-					.onChange(async (value) => {
-						slider.showTooltip();
-						this.plugin.settings.palette = value;
-						await this.plugin.saveSettings();
-						this.renderPalette(paletteEl);
-					})
-			)
-
-		const paletteEl = containerEl.createEl("div", {
-			cls: "palette",
-			attr: {style: `display: flex; align-items: stretch`}
-		});
-		this.renderPalette(paletteEl);
-
-		new Setting(containerEl)
-			.setName('Palette shift')
-			.setDesc('If the colors of some tags don\'t fit, you can shift the palette.')
-			.addSlider(slider =>
-				slider.setLimits(0, 10, 1)
-					.setValue(this.plugin.settings.seed)
-					.onChange(async (value) => {
-						slider.showTooltip();
-						this.plugin.settings.seed = value;
-						await this.plugin.saveSettings();
-						this.renderPalette(paletteEl);
-					})
-			)
-
-		const deprecationWarning = new Setting(containerEl)
-			.setName('🚨 Saturation and Lightness will be removed in next updates')
-			.setDesc('')
-
-		deprecationWarning.descEl.innerHTML = `They will be replaced by a select field with 2—3 presets.<br/>If you rely on these options please fill the form <a href="https://forms.gle/Aw6uaRJsr4seST8X6">https://forms.gle/Aw6uaRJsr4seST8X6</a>`
-
-		new Setting(containerEl)
-			.setHeading()
-			.setName('Experimental')
-			.setDesc('Dangerous actions or insanely unstable options that could be changed or removed in any time')
-			.addToggle(toggle =>
-				toggle.setValue(this.showExperimental).onChange(async (value) => {
-					this.showExperimental = value;
-					this.display();
-				})
-			)
-
-		if (this.showExperimental) {
-			new Setting(containerEl)
-				.setName('Saturation [Deprecated]')
-				.setDesc('The default value is the best')
-				.addDropdown(dropdown =>
-					dropdown.addOption(String(DEFAULT_SETTINGS.chroma), 'Default')
-						.addOptions({
-							'5': 'Faded',
-							'32': 'Moderate',
-							'64': 'Vivid',
-							'128': 'Excessive',
-						})
-						.setValue(String(this.plugin.settings.chroma))
-						.onChange(async (value) => {
-							this.plugin.settings.chroma = Number(value);
-							await this.plugin.saveSettings();
-							this.renderPalette(paletteEl);
-						})
-				)
-
-			new Setting(containerEl)
-				.setName('Lightness [Deprecated]')
-				.setDesc('The default value is the best')
-				.addDropdown(dropdown =>
-					dropdown.addOption(String(DEFAULT_SETTINGS.lightness), 'Default')
-						.addOptions({
-							'0': 'Dark',
-							'32': 'Medium Dark',
-							'64': 'Medium',
-							'90': 'Light',
-							'100': 'Bleach',
-						})
-						.setValue(String(this.plugin.settings.lightness))
-						.onChange(async (value) => {
-							this.plugin.settings.lightness = Number(value);
-							await this.plugin.saveSettings();
-							this.renderPalette(paletteEl);
-						})
-				)
-
-			new Setting(containerEl)
-				.setName('Reset config')
-				.setDesc('🚨 All colors of all tags will be recalculated as if it was the first launch of the plugin. Requires restart of Obsidian.')
-				.addButton(button =>
-					button.setButtonText('Reset')
-						.setClass('mod-warning')
-						.onClick(async () => {
-							new Notice(`✅ Reset is done\nPlease restart Obsidian`, 10000);
-							button.setDisabled(true);
-							button.buttonEl.setAttribute('disabled', 'true');
-							button.buttonEl.classList.remove('mod-warning');
-							this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS);
-							await this.plugin.saveData(this.plugin.settings);
-						})
-				)
-		}
-	}
-}
