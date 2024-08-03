@@ -1,4 +1,4 @@
-import { debounce, Plugin } from "obsidian";
+import { debounce, Notice, Plugin, requestUrl } from "obsidian";
 import Color from "colorjs.io";
 import { coloredClassApplyerPlugin } from "./coloredClassApplyerPlugin";
 import { ColoredTagsPluginSettingTab } from "./ColoredTagsPluginSettingTab";
@@ -20,6 +20,8 @@ export default class ColoredTagsPlugin extends Plugin {
 		dark: [],
 	};
 
+	updatingInterval: number;
+
 	async onload() {
 		await this.loadSettings();
 		this.tagsMap = new Map(Object.entries(this.settings.knownTags));
@@ -27,6 +29,10 @@ export default class ColoredTagsPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(async () => {
 			await this.saveKnownTags();
 			this.reload();
+
+			window.setTimeout(() => {
+				this.checkUpdates();
+			}, 5000);
 
 			this.registerEvent(
 				this.app.workspace.on(
@@ -125,10 +131,33 @@ export default class ColoredTagsPlugin extends Plugin {
 		});
 	}
 
+	async checkUpdates() {
+		try {
+			const { json: response } = await requestUrl({
+				url: "https://api.github.com/repos/pfrankov/obsidian-colored-tags/releases/latest",
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				contentType: "application/json",
+			});
+
+			if (response.tag_name !== this.manifest.version) {
+				new Notice(`⬆️ Colored Tags: a new version is available`);
+			}
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
 	reload() {
 		this.onunload();
 		this.generatePalettes();
 		this.update();
+		this.updatingInterval = window.setInterval(
+			this.checkUpdates.bind(this),
+			10800000,
+		); // every 3 hours
 	}
 
 	async saveSettings() {
@@ -396,6 +425,7 @@ export default class ColoredTagsPlugin extends Plugin {
 	onunload() {
 		this.renderedTagsSet.clear();
 		removeCSS();
+		window.clearInterval(this.updatingInterval);
 	}
 }
 
