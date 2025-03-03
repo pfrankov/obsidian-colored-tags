@@ -12,6 +12,7 @@ assignees: ''
 
 > FAQ:
 > - [Issue: the same colors for different tags](https://github.com/pfrankov/obsidian-colored-tags/issues/25#issuecomment-2460580384).
+> - [How to colorize just one tag](https://github.com/pfrankov/obsidian-colored-tags/issues/17)
 
 **Describe the bug**
 A clear and concise description of what the bug is.
