@@ -3,11 +3,13 @@
 	"version": "5.0.1",
 	"description": "Colorizes tags in different colors. Colors of nested tags are mixed with the root tag to improve readability. Text color contrast is automatically matched to comply with AA level of WCAG 2.1.",
 	"main": "main.js",
-	"scripts": {
+  "scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "node esbuild.config.mjs production",
+		"build": "npm run typecheck && node esbuild.config.mjs production",
+		"typecheck": "tsc --noEmit",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"format": "prettier 'src/**/*' --write"
+		"format": "prettier 'src/**/*' --write",
+		"lint": "eslint src --max-warnings=0"
 	},
 	"keywords": [
 		"obsidian",
@@ -17,10 +19,12 @@
 	],
 	"author": "Pavel Frankov",
 	"license": "MIT",
-	"devDependencies": {
+  "devDependencies": {
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
+		"eslint": "^8.57.0",
+		"eslint-plugin-sonarjs": "^0.23.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
 		"obsidian": "latest",

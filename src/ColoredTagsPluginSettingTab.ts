@@ -58,7 +58,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		const mostPopularTags = tagsArray.splice(0, 2);
 
 		const mostPopularNestedTags = Object.values(
-			tagsArray.reduce((acc, tag) => {
+			tagsArray.reduce<Record<number, string>>((acc, tag) => {
 				const nestingLevel = tag.split("/").length;
 				if (!acc[nestingLevel]) {
 					acc[nestingLevel] = tag;
@@ -67,11 +67,13 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 			}, {}),
 		);
 
-		[...mostPopularTags, ...mostPopularNestedTags].forEach((tag) => {
-			const link = tagEl.createEl("a", { attr: { href: tag } });
-			link.classList.add("tag");
-			link.innerText = tag;
-		});
+		[...mostPopularTags, ...mostPopularNestedTags].forEach(
+			(tag: string) => {
+				const link = tagEl.createEl("a", { attr: { href: tag } });
+				link.classList.add("tag");
+				link.innerText = tag;
+			},
+		);
 	}
 
 	display(): void {
@@ -87,6 +89,15 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		});
 		this.renderPalette(paletteEl);
 
+		this.renderPaletteSettings(containerEl, paletteEl);
+		this.renderAccessibilitySettings(containerEl);
+		this.renderExperimentalSettings(containerEl);
+	}
+
+	private renderPaletteSettings(
+		containerEl: HTMLElement,
+		paletteEl: HTMLElement,
+	): void {
 		new Setting(containerEl)
 			.setHeading()
 			.setName("Palette")
@@ -101,34 +112,16 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 						[ColoredTagsPaletteType.CUSTOM]: "Custom",
 					})
 					.setValue(String(this.plugin.settings.palette.selected))
-					.onChange(async (value: ColoredTagsPaletteType) => {
-						this.plugin.settings.palette.selected = value;
+					.onChange(async (value) => {
+						this.plugin.settings.palette.selected =
+							value as ColoredTagsPaletteType;
 						await this.plugin.saveSettings();
 						this.display();
 					}),
 			);
 
 		if (this.plugin.settings.palette.selected === "custom") {
-			const customPaletteField = new Setting(containerEl)
-				.setName("Custom palette")
-				.setDesc("")
-				.addText((text) => {
-					text.inputEl.style.minWidth = "100%";
-					text.setValue(
-						this.plugin.settings.palette.custom,
-					).setPlaceholder("Paste palette");
-					text.onChange(async (value) => {
-						if (/^([A-Fa-f0-9]{6}(-|$))+$/i.test(value)) {
-							this.plugin.settings.palette.custom = value;
-							await this.plugin.saveSettings();
-							this.renderPalette(paletteEl);
-						}
-					});
-				});
-			customPaletteField.descEl.innerHTML = `
-				The format is <code>XXXXXX-XXXXXX-XXXXXX</code> for each RGB color.<br/>
-				You can share the best color palettes or get one <a href="https://github.com/pfrankov/obsidian-colored-tags/discussions/18">from the community</a>.
-			`.trim();
+			this.renderCustomPaletteField(containerEl, paletteEl);
 		}
 
 		new Setting(containerEl)
@@ -147,7 +140,35 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 						this.renderPalette(paletteEl);
 					}),
 			);
+	}
 
+	private renderCustomPaletteField(
+		containerEl: HTMLElement,
+		paletteEl: HTMLElement,
+	): void {
+		const customPaletteField = new Setting(containerEl)
+			.setName("Custom palette")
+			.setDesc("")
+			.addText((text) => {
+				text.inputEl.style.minWidth = "100%";
+				text.setValue(
+					this.plugin.settings.palette.custom,
+				).setPlaceholder("Paste palette");
+				text.onChange(async (value) => {
+					if (/^([A-Fa-f0-9]{6}(-|$))+$/i.test(value)) {
+						this.plugin.settings.palette.custom = value;
+						await this.plugin.saveSettings();
+						this.renderPalette(paletteEl);
+					}
+				});
+			});
+		customPaletteField.descEl.innerHTML = `
+			The format is <code>XXXXXX-XXXXXX-XXXXXX</code> for each RGB color.<br/>
+			You can share the best color palettes or get one <a href="https://github.com/pfrankov/obsidian-colored-tags/discussions/18">from the community</a>.
+		`.trim();
+	}
+
+	private renderAccessibilitySettings(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setHeading()
 			.setName("🦾 Accessibility")
@@ -178,7 +199,9 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 						}),
 				);
 		}
+	}
 
+	private renderExperimentalSettings(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setHeading()
 			.setName("🧪 Experimental")
@@ -194,56 +217,58 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		if (this.showExperimental) {
-			new Setting(containerEl)
-				.setName("Mix colors")
-				.setDesc("It helps to make text readable")
-				.addToggle((toggle) =>
-					toggle
-						.setValue(this.plugin.settings.mixColors)
-						.onChange(async (value) => {
-							this.plugin.settings.mixColors = value;
-							await this.plugin.saveSettings();
-							this.display();
-						}),
-				);
-
-			new Setting(containerEl)
-				.setName("Gradient transition")
-				.addToggle((toggle) =>
-					toggle
-						.setValue(this.plugin.settings.transition)
-						.onChange(async (value) => {
-							this.plugin.settings.transition = value;
-							await this.plugin.saveSettings();
-							this.display();
-						}),
-				);
-
-			new Setting(containerEl)
-				.setName("Reset config")
-				.setDesc(
-					"🚨 All colors of all tags will be recalculated as if it was the first launch of the plugin. Requires restart of Obsidian.",
-				)
-				.addButton((button) =>
-					button
-						.setButtonText("Reset")
-						.setClass("mod-warning")
-						.onClick(async () => {
-							new Notice(
-								`✅ Reset is done\nPlease restart Obsidian`,
-								10000,
-							);
-							button.setDisabled(true);
-							button.buttonEl.setAttribute("disabled", "true");
-							button.buttonEl.classList.remove("mod-warning");
-							this.plugin.settings = Object.assign(
-								{},
-								DEFAULT_SETTINGS,
-							);
-							await this.plugin.saveData(this.plugin.settings);
-						}),
-				);
+		if (!this.showExperimental) {
+			return;
 		}
+
+		new Setting(containerEl)
+			.setName("Mix colors")
+			.setDesc("It helps to make text readable")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.mixColors)
+					.onChange(async (value) => {
+						this.plugin.settings.mixColors = value;
+						await this.plugin.saveSettings();
+						this.display();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Gradient transition")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.transition)
+					.onChange(async (value) => {
+						this.plugin.settings.transition = value;
+						await this.plugin.saveSettings();
+						this.display();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Reset config")
+			.setDesc(
+				"🚨 All colors of all tags will be recalculated as if it was the first launch of the plugin. Requires restart of Obsidian.",
+			)
+			.addButton((button) =>
+				button
+					.setButtonText("Reset")
+					.setClass("mod-warning")
+					.onClick(async () => {
+						new Notice(
+							`✅ Reset is done\nPlease restart Obsidian`,
+							10000,
+						);
+						button.setDisabled(true);
+						button.buttonEl.setAttribute("disabled", "true");
+						button.buttonEl.classList.remove("mod-warning");
+						this.plugin.settings = Object.assign(
+							{},
+							DEFAULT_SETTINGS,
+						);
+						await this.plugin.saveData(this.plugin.settings);
+					}),
+			);
 	}
 }
