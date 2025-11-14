@@ -1,6 +1,6 @@
 import { EditorView, ViewUpdate, ViewPlugin } from "@codemirror/view";
 
-function applyColoredClasses(domElement: HTMLElement): void {
+export function applyColoredClasses(domElement: HTMLElement): void {
 	const nodes = Array.from(
 		domElement.getElementsByClassName("cm-hashtag"),
 	) as HTMLElement[];
@@ -24,7 +24,7 @@ function applyColoredClasses(domElement: HTMLElement): void {
 	}
 }
 
-function cleanupOldClasses(
+export function cleanupOldClasses(
 	el: HTMLElement,
 	hashEl: HTMLElement,
 	newClassName: string,
@@ -37,7 +37,7 @@ function cleanupOldClasses(
 	}
 }
 
-function applyClassName(
+export function applyClassName(
 	el: HTMLElement,
 	hashEl: HTMLElement,
 	className: string,

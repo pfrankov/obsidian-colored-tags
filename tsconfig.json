@@ -9,6 +9,7 @@
     "allowJs": true,
     "noImplicitAny": true,
     "moduleResolution": "node",
+    "skipLibCheck": true,
     "importHelpers": true,
     "isolatedModules": true,
 	"strictNullChecks": true,
@@ -16,9 +17,11 @@
       "DOM",
       "ES5",
       "ES6",
-      "ES7"
-    ]
+      "ES7",
+      "ES2017"
+    ],
+    "types": ["vitest/globals"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
