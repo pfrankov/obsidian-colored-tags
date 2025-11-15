@@ -2,6 +2,7 @@ import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import ColoredTagsPlugin from "./main";
 import { DEFAULT_SETTINGS } from "./defaultSettings";
 import { ColoredTagsPaletteType } from "./interfaces";
+import { I18n } from "./i18n";
 
 export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 	plugin: ColoredTagsPlugin;
@@ -100,16 +101,17 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 	): void {
 		new Setting(containerEl)
 			.setHeading()
-			.setName("Palette")
-			.setDesc("Select palette")
+			.setName(I18n.t("settings.palette.heading"))
+			.setDesc(I18n.t("settings.palette.description"))
 			.addDropdown((dropdown) =>
 				dropdown
 					.addOptions({
 						[ColoredTagsPaletteType.ADAPTIVE_SOFT]:
-							"🌸 Adaptive soft",
+							I18n.t("settings.palette.options.adaptiveSoft"),
 						[ColoredTagsPaletteType.ADAPTIVE_BRIGHT]:
-							"🌺 Adaptive bright",
-						[ColoredTagsPaletteType.CUSTOM]: "Custom",
+							I18n.t("settings.palette.options.adaptiveBright"),
+						[ColoredTagsPaletteType.CUSTOM]:
+							I18n.t("settings.palette.options.custom"),
 					})
 					.setValue(String(this.plugin.settings.palette.selected))
 					.onChange(async (value) => {
@@ -125,10 +127,8 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		}
 
 		new Setting(containerEl)
-			.setName("Palette shift")
-			.setDesc(
-				"If the colors of some tags don't fit, you can shift the palette.",
-			)
+			.setName(I18n.t("settings.palette.shift.name"))
+			.setDesc(I18n.t("settings.palette.shift.description"))
 			.addSlider((slider) =>
 				slider
 					.setLimits(0, this.plugin.palettes.light.length - 1, 1)
@@ -147,13 +147,15 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		paletteEl: HTMLElement,
 	): void {
 		const customPaletteField = new Setting(containerEl)
-			.setName("Custom palette")
+			.setName(I18n.t("settings.palette.custom.name"))
 			.setDesc("")
 			.addText((text) => {
 				text.inputEl.style.minWidth = "100%";
 				text.setValue(
 					this.plugin.settings.palette.custom,
-				).setPlaceholder("Paste palette");
+				).setPlaceholder(
+					I18n.t("settings.palette.custom.placeholder"),
+				);
 				text.onChange(async (value) => {
 					if (/^([A-Fa-f0-9]{6}(-|$))+$/i.test(value)) {
 						this.plugin.settings.palette.custom = value;
@@ -162,17 +164,23 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					}
 				});
 			});
-		customPaletteField.descEl.innerHTML = `
-			The format is <code>XXXXXX-XXXXXX-XXXXXX</code> for each RGB color.<br/>
-			You can share the best color palettes or get one <a href="https://github.com/pfrankov/obsidian-colored-tags/discussions/18">from the community</a>.
-		`.trim();
+		const communityLinkStart =
+			'<a href="https://github.com/pfrankov/obsidian-colored-tags/discussions/18">';
+		const communityLinkEnd = "</a>";
+		customPaletteField.descEl.innerHTML = I18n.t(
+			"settings.palette.custom.description",
+			{
+				communityLinkStart,
+				communityLinkEnd,
+			},
+		);
 	}
 
 	private renderAccessibilitySettings(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setHeading()
-			.setName("🦾 Accessibility")
-			.setDesc("Show accessibility options")
+			.setName(I18n.t("settings.accessibility.heading"))
+			.setDesc(I18n.t("settings.accessibility.description"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.showAccessibility)
@@ -184,8 +192,12 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 
 		if (this.showAccessibility) {
 			new Setting(containerEl)
-				.setName("High text contrast")
-				.setDesc("Use only white and black colors for texts")
+				.setName(I18n.t("settings.accessibility.highTextContrast.name"))
+				.setDesc(
+					I18n.t(
+						"settings.accessibility.highTextContrast.description",
+					),
+				)
 				.addToggle((toggle) =>
 					toggle
 						.setValue(
@@ -204,10 +216,8 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 	private renderExperimentalSettings(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setHeading()
-			.setName("🧪 Experimental")
-			.setDesc(
-				"Dangerous actions or insanely unstable options that could be changed or removed in any time",
-			)
+			.setName(I18n.t("settings.experimental.heading"))
+			.setDesc(I18n.t("settings.experimental.description"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.showExperimental)
@@ -222,8 +232,8 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		}
 
 		new Setting(containerEl)
-			.setName("Mix colors")
-			.setDesc("It helps to make text readable")
+			.setName(I18n.t("settings.experimental.mixColors.name"))
+			.setDesc(I18n.t("settings.experimental.mixColors.description"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.mixColors)
@@ -235,7 +245,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Gradient transition")
+			.setName(I18n.t("settings.experimental.gradientTransition.name"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.transition)
@@ -247,19 +257,16 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Reset config")
-			.setDesc(
-				"🚨 All colors of all tags will be recalculated as if it was the first launch of the plugin. Requires restart of Obsidian.",
-			)
+			.setName(I18n.t("settings.experimental.reset.name"))
+			.setDesc(I18n.t("settings.experimental.reset.description"))
 			.addButton((button) =>
 				button
-					.setButtonText("Reset")
+					.setButtonText(
+						I18n.t("settings.experimental.reset.button"),
+					)
 					.setClass("mod-warning")
 					.onClick(async () => {
-						new Notice(
-							`✅ Reset is done\nPlease restart Obsidian`,
-							10000,
-						);
+						new Notice(I18n.t("notices.resetDone"), 10000);
 						button.setDisabled(true);
 						button.buttonEl.setAttribute("disabled", "true");
 						button.buttonEl.classList.remove("mod-warning");

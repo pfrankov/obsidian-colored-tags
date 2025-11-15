@@ -1,0 +1,50 @@
+{
+	"settings": {
+		"palette": {
+			"heading": "调色板",
+			"description": "选择调色板",
+			"options": {
+				"adaptiveSoft": "🌸 自适应柔和",
+				"adaptiveBright": "🌺 自适应鲜艳",
+				"custom": "自定义"
+			},
+			"shift": {
+				"name": "调色板偏移",
+				"description": "如果某些标签的颜色不合适，可以偏移调色板。"
+			},
+			"custom": {
+				"name": "自定义调色板",
+				"placeholder": "粘贴调色板",
+				"description": "每种 RGB 颜色的格式为 <code>XXXXXX-XXXXXX-XXXXXX</code>。<br/>你可以分享优质的配色，或从{{communityLinkStart}}社区{{communityLinkEnd}}获取。"
+			}
+		},
+		"accessibility": {
+			"heading": "🦾 无障碍",
+			"description": "显示无障碍选项",
+			"highTextContrast": {
+				"name": "高对比文本",
+				"description": "仅对文本使用黑色和白色"
+			}
+		},
+		"experimental": {
+			"heading": "🧪 实验功能",
+			"description": "危险操作或极其不稳定的选项，随时可能修改或移除",
+			"mixColors": {
+				"name": "混合颜色",
+				"description": "有助于保持文本可读"
+			},
+			"gradientTransition": {
+				"name": "渐变过渡"
+			},
+			"reset": {
+				"name": "重置配置",
+				"description": "🚨 所有标签的颜色都会重新计算，就像第一次启动插件一样。需要重新启动 Obsidian。",
+				"button": "重置"
+			}
+		}
+	},
+	"notices": {
+		"updateAvailable": "⬆️ {{pluginName}}：有可用的新版本",
+		"resetDone": "✅ 重置完成\n请重新启动 Obsidian"
+	}
+}

@@ -9,6 +9,7 @@ import {
 import { ColorService } from "./ColorService";
 import { CSSManager } from "./CSSManager";
 import { TagManager } from "./TagManager";
+import { I18n } from "./i18n";
 
 export default class ColoredTagsPlugin extends Plugin {
 	private static readonly INITIAL_UPDATE_CHECK_DELAY = 5000; // 5 seconds
@@ -107,7 +108,10 @@ export default class ColoredTagsPlugin extends Plugin {
 			});
 
 			if (response.tag_name !== this.manifest.version) {
-				new Notice(`⬆️ Colored Tags: a new version is available`);
+				const pluginName = this.manifest?.name ?? "Colored Tags";
+				new Notice(
+					I18n.t("notices.updateAvailable", { pluginName }),
+				);
 			}
 		} catch (error) {
 			console.error(error);

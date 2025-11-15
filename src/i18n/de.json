@@ -1,0 +1,50 @@
+{
+	"settings": {
+		"palette": {
+			"heading": "Palette",
+			"description": "Palette auswählen",
+			"options": {
+				"adaptiveSoft": "🌸 Adaptive weich",
+				"adaptiveBright": "🌺 Adaptive kräftig",
+				"custom": "Benutzerdefiniert"
+			},
+			"shift": {
+				"name": "Palettenverschiebung",
+				"description": "Wenn die Farben einiger Tags nicht passen, kannst du die Palette verschieben."
+			},
+			"custom": {
+				"name": "Benutzerdefinierte Palette",
+				"placeholder": "Palette einfügen",
+				"description": "Das Format ist <code>XXXXXX-XXXXXX-XXXXXX</code> für jede RGB-Farbe.<br/>Du kannst die besten Farbpaletten teilen oder eine {{communityLinkStart}}aus der Community{{communityLinkEnd}} erhalten."
+			}
+		},
+		"accessibility": {
+			"heading": "🦾 Barrierefreiheit",
+			"description": "Barrierefreiheitsoptionen anzeigen",
+			"highTextContrast": {
+				"name": "Hoher Textkontrast",
+				"description": "Nur weiße und schwarze Textfarben verwenden"
+			}
+		},
+		"experimental": {
+			"heading": "🧪 Experimentell",
+			"description": "Gefährliche Aktionen oder extrem instabile Optionen, die jederzeit geändert oder entfernt werden können",
+			"mixColors": {
+				"name": "Farben mischen",
+				"description": "Hilft dabei, den Text lesbar zu machen"
+			},
+			"gradientTransition": {
+				"name": "Gradientenübergang"
+			},
+			"reset": {
+				"name": "Konfiguration zurücksetzen",
+				"description": "🚨 Alle Farben aller Tags werden neu berechnet, als wäre es der erste Start des Plugins. Erfordert einen Neustart von Obsidian.",
+				"button": "Zurücksetzen"
+			}
+		}
+	},
+	"notices": {
+		"updateAvailable": "⬆️ {{pluginName}}: Eine neue Version ist verfügbar",
+		"resetDone": "✅ Zurücksetzen abgeschlossen\nBitte Obsidian neu starten"
+	}
+}

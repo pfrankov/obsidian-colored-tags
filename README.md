@@ -11,11 +11,21 @@ The colors are adjusted for the dark theme as well.
 
 The main idea of the plugin is to make tags visually different from each other, so you should expect that the **colors may change with upcoming updates**.
 
-If you need to color individual tags, this plugin is not suitable. Try [Colored Tag Wrangler](https://github.com/code-of-chaos/obsidian-colored_tags_wrangler) instead.
+## Supported Languages
+
+The plugin interface is available in multiple languages:
+- English
+- Deutsch (German)
+- Русский (Russian)
+- 中文 (Chinese)
+
+The plugin automatically detects language settings and displays the interface in your preferred language.
 
 >**Limitations:**
 >- Properties tags can not be styled until fixes in Obsidian.
 >- Tags with underscore _ can not be styled properly.
+
+If you need to color individual tags, this plugin is not suitable. Try [Colored Tag Wrangler](https://github.com/code-of-chaos/obsidian-colored_tags_wrangler) instead.
 
 ## Roadmap
 - [x] ~~Settings for palette size, base chroma, and base lightness.~~

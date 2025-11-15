@@ -1,0 +1,50 @@
+{
+	"settings": {
+		"palette": {
+			"heading": "Palette",
+			"description": "Select palette",
+			"options": {
+				"adaptiveSoft": "🌸 Adaptive soft",
+				"adaptiveBright": "🌺 Adaptive bright",
+				"custom": "Custom"
+			},
+			"shift": {
+				"name": "Palette shift",
+				"description": "If the colors of some tags don't fit, you can shift the palette."
+			},
+			"custom": {
+				"name": "Custom palette",
+				"placeholder": "Paste palette",
+				"description": "The format is <code>XXXXXX-XXXXXX-XXXXXX</code> for each RGB color.<br/>You can share the best color palettes or get one {{communityLinkStart}}from the community{{communityLinkEnd}}."
+			}
+		},
+		"accessibility": {
+			"heading": "🦾 Accessibility",
+			"description": "Show accessibility options",
+			"highTextContrast": {
+				"name": "High text contrast",
+				"description": "Use only white and black colors for texts"
+			}
+		},
+		"experimental": {
+			"heading": "🧪 Experimental",
+			"description": "Dangerous actions or insanely unstable options that could be changed or removed in any time",
+			"mixColors": {
+				"name": "Mix colors",
+				"description": "It helps to make text readable"
+			},
+			"gradientTransition": {
+				"name": "Gradient transition"
+			},
+			"reset": {
+				"name": "Reset config",
+				"description": "🚨 All colors of all tags will be recalculated as if it was the first launch of the plugin. Requires restart of Obsidian.",
+				"button": "Reset"
+			}
+		}
+	},
+	"notices": {
+		"updateAvailable": "⬆️ {{pluginName}}: a new version is available",
+		"resetDone": "✅ Reset is done\nPlease restart Obsidian"
+	}
+}

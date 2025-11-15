@@ -9,6 +9,8 @@
     "allowJs": true,
     "noImplicitAny": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "importHelpers": true,
     "isolatedModules": true,
