@@ -35,9 +35,7 @@ describe("I18n", () => {
 			pluginName: "Colored Tags",
 		});
 
-		expect(translated).toBe(
-			"⬆️ Colored Tags: a new version is available",
-		);
+		expect(translated).toBe("⬆️ Colored Tags: a new version is available");
 	});
 
 	it("falls back to english value when locale translation is missing", () => {

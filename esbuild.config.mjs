@@ -18,6 +18,7 @@ const context = await esbuild.context({
 	},
 	entryPoints: {
 		main: 'src/main.ts',
+		styles: 'src/styles.css',
 	},
 	outdir: 'dist',
 	bundle: true,
@@ -44,6 +45,7 @@ const context = await esbuild.context({
 	treeShaking: true,
 	loader: {
 		".ts": "ts",
+		".css": "css",
 	},
 	plugins: [
 		copyFilesPlugin([

@@ -13,7 +13,8 @@
 		"test:run": "cross-env VITE_CJS_IGNORE_WARNING=1 vitest run",
 		"test:watch": "cross-env VITE_CJS_IGNORE_WARNING=1 vitest --watch",
 		"test:coverage": "cross-env VITE_CJS_IGNORE_WARNING=1 vitest run --coverage && node ./scripts/check-coverage.js",
-		"lint": "eslint src --max-warnings=0"
+		"lint": "eslint src --max-warnings=0",
+		"check": "npm run lint && npm run typecheck && npm run test:coverage"
 	},
 	"keywords": [
 		"obsidian",

@@ -12,10 +12,10 @@ export default defineConfig({
       exclude: ['tests/**', 'src/main.ts', 'copy-files-plugin.mjs', 'esbuild.config.mjs', 'version-bump.mjs', 'versions.json', 'manifest.json', 'scripts/check-coverage.js'],
       thresholds: {
         global: {
-          statements: 45,
-          branches: 45,
-          functions: 45,
-          lines: 45,
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100,
         },
       },
     },

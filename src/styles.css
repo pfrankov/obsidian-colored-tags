@@ -1,0 +1,137 @@
+.colored-tags-settings .tagsExample {
+	display: flex;
+	gap: 0.5em;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	margin: 1em 0 2em;
+}
+
+.colored-tags-settings .palette {
+	display: flex;
+	align-items: stretch;
+	border-radius: var(--radius-m);
+	overflow: hidden;
+}
+
+.colored-tags-settings .visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.colored-tags-settings .community-palettes {
+	display: block;
+}
+
+.colored-tags-settings .community-palettes > *:first-child {
+	margin-inline-end: 0;
+}
+
+.colored-tags-settings .community-palettes__scroll {
+	margin-top: var(--size-4-3);
+	max-height: 400px;
+	overflow-y: auto;
+	padding: var(--size-4-3);
+}
+
+.colored-tags-settings .community-palettes__grid {
+	display: grid;
+	gap: var(--size-4-4);
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.colored-tags-settings .community-palettes__status {
+	color: var(--text-faint);
+	padding: var(--size-4-3);
+	border-radius: var(--radius-m);
+	background-color: var(--background-primary);
+	border: var(--border-width) solid var(--background-modifier-border);
+}
+
+.colored-tags-settings .community-palette-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+	padding: var(--size-4-3);
+	border-radius: var(--radius-m);
+	position: relative;
+	background-color: var(--dropdown-background);
+	box-shadow: var(--input-shadow);
+	cursor: pointer;
+	transition: all 120ms ease-in-out;
+}
+
+.colored-tags-settings .community-palette-card.is-selected {
+	box-shadow: 0 0 0 2px var(--interactive-accent), var(--input-shadow);
+	cursor: auto;
+}
+
+.colored-tags-settings .community-palette-card.is-selected::after {
+	content: "✓";
+	position: absolute;
+	top: var(--size-4-2);
+	right: var(--size-4-2);
+	width: var(--size-4-4);
+	height: var(--size-4-4);
+	border-radius: var(--radius-round, 999px);
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent, var(--background-primary));
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: var(--font-semibold, 600);
+}
+
+.colored-tags-settings .community-palette-card:hover {
+	background-color: var(--dropdown-background-hover);
+	box-shadow: var(--input-shadow-hover);
+}
+
+.colored-tags-settings .community-palette-card.is-selected:hover {
+	box-shadow: 0 0 0 2px var(--interactive-accent), var(--input-shadow);
+}
+
+.colored-tags-settings .community-palette-card:focus-visible {
+	outline: var(--border-width) solid var(--interactive-accent);
+	outline-offset: var(--outline-offset);
+	box-shadow: 0 0 0 3px var(--background-modifier-border-focus);
+}
+
+.colored-tags-settings .community-palette-card__preview {
+	display: flex;
+	overflow: hidden;
+	border-radius: var(--radius-m);
+	height: var(--input-height);
+}
+
+.colored-tags-settings .community-palette-card__meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
+	min-height: var(--line-height-tight);
+}
+
+.colored-tags-settings .community-palette-card__author {
+	font-family: var(--font-monospace);
+	color: var(--text-muted);
+}
+
+.colored-tags-settings
+	.community-palette-card.is-selected
+	.community-palette-card__author {
+	font-weight: var(--font-semibold, 600);
+}
+
+.colored-tags-settings .community-palette-card__upvotes {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-medium);
+}

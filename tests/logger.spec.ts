@@ -27,7 +27,9 @@ describe("logger", () => {
 	});
 
 	it("delegates log to console.log", () => {
-		const spy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+		const spy = vi
+			.spyOn(console, "log")
+			.mockImplementation(() => undefined);
 
 		logger.log("log-message");
 

@@ -15,7 +15,15 @@
 			"custom": {
 				"name": "Custom palette",
 				"placeholder": "Paste palette",
-				"description": "The format is <code>XXXXXX-XXXXXX-XXXXXX</code> for each RGB color.<br/>You can share the best color palettes or get one {{communityLinkStart}}from the community{{communityLinkEnd}}."
+				"description": "The format is <code>XXXXXX-XXXXXX-XXXXXX</code> for each RGB color.",
+				"community": {
+					"heading": "Community palettes",
+					"description": "Below are palettes collected from the GitHub discussion. Click any card to apply it instantly or {{communityLinkStart}}share your own{{communityLinkEnd}}.",
+					"loading": "Loading palettes…",
+					"error": "Unable to load palettes right now. Feel free to open the discussion to browse them manually.",
+					"empty": "No shared palettes yet. Be the first to post one!",
+					"applyHint": "Click to apply this palette"
+				}
 			}
 		},
 		"accessibility": {
@@ -45,6 +53,7 @@
 	},
 	"notices": {
 		"updateAvailable": "⬆️ {{pluginName}}: a new version is available",
-		"resetDone": "✅ Reset is done\nPlease restart Obsidian"
+		"resetDone": "✅ Reset is done\nPlease restart Obsidian",
+		"communityPaletteApplied": "🎨 Applied community palette by {{author}}"
 	}
 }

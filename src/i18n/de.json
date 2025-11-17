@@ -15,7 +15,15 @@
 			"custom": {
 				"name": "Benutzerdefinierte Palette",
 				"placeholder": "Palette einfügen",
-				"description": "Das Format ist <code>XXXXXX-XXXXXX-XXXXXX</code> für jede RGB-Farbe.<br/>Du kannst die besten Farbpaletten teilen oder eine {{communityLinkStart}}aus der Community{{communityLinkEnd}} erhalten."
+				"description": "Das Format ist <code>XXXXXX-XXXXXX-XXXXXX</code> für jede RGB-Farbe.",
+				"community": {
+					"heading": "Community-Paletten",
+					"description": "Hier findest du Paletten aus der GitHub-Diskussion. Klicke auf eine Karte, um sie sofort zu übernehmen oder {{communityLinkStart}}teile deine eigene{{communityLinkEnd}}.",
+					"loading": "Paletten werden geladen…",
+					"error": "Paletten konnten nicht geladen werden. Öffne die Diskussion, um sie manuell anzusehen.",
+					"empty": "Noch keine Community-Paletten vorhanden. Teile eine!",
+					"applyHint": "Klicke, um diese Palette zu verwenden"
+				}
 			}
 		},
 		"accessibility": {
@@ -45,6 +53,7 @@
 	},
 	"notices": {
 		"updateAvailable": "⬆️ {{pluginName}}: Eine neue Version ist verfügbar",
-		"resetDone": "✅ Zurücksetzen abgeschlossen\nBitte Obsidian neu starten"
+		"resetDone": "✅ Zurücksetzen abgeschlossen\nBitte Obsidian neu starten",
+		"communityPaletteApplied": "🎨 Community-Palette von {{author}} erfolgreich angewendet"
 	}
 }

@@ -109,9 +109,7 @@ export default class ColoredTagsPlugin extends Plugin {
 
 			if (response.tag_name !== this.manifest.version) {
 				const pluginName = this.manifest?.name ?? "Colored Tags";
-				new Notice(
-					I18n.t("notices.updateAvailable", { pluginName }),
-				);
+				new Notice(I18n.t("notices.updateAvailable", { pluginName }));
 			}
 		} catch (error) {
 			console.error(error);

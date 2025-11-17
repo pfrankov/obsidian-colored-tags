@@ -53,7 +53,7 @@ const coverage = {
   lines: pct(totals.lines.covered, totals.lines.total),
 };
 
-const threshold = 45;
+const threshold = 100;
 let failed = false;
 for (const key of Object.keys(coverage)) {
   const value = coverage[key];

@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 export class App {
 	workspace: Workspace;
 	vault: Vault;
@@ -545,6 +547,14 @@ export class Modal {
 	this.textContent = (this.textContent || "") + String(text);
 };
 
+(HTMLElement.prototype as any).setAttr = function (
+	name: string,
+	value: string,
+): HTMLElement {
+	this.setAttribute(name, value);
+	return this;
+};
+
 export function sanitizeHTMLToDom(html: string): DocumentFragment {
 	const template = document.createElement("template");
 	template.innerHTML = html;
@@ -552,3 +562,24 @@ export function sanitizeHTMLToDom(html: string): DocumentFragment {
 	// If we need to test mode switching, we'll do it through the isTextMode property directly
 	return template.content;
 }
+
+type RequestUrlOptions = {
+	url: string;
+	method?: string;
+	headers?: Record<string, string>;
+	body?: any;
+	throw?: boolean;
+};
+
+type RequestUrlResponse = {
+	status: number;
+	json?: unknown;
+	text?: string;
+};
+
+export const requestUrl = vi.fn(
+	async (_options: RequestUrlOptions): Promise<RequestUrlResponse> => ({
+		status: 200,
+		json: [],
+	}),
+);

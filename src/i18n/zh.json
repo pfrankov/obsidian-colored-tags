@@ -15,7 +15,15 @@
 			"custom": {
 				"name": "自定义调色板",
 				"placeholder": "粘贴调色板",
-				"description": "每种 RGB 颜色的格式为 <code>XXXXXX-XXXXXX-XXXXXX</code>。<br/>你可以分享优质的配色，或从{{communityLinkStart}}社区{{communityLinkEnd}}获取。"
+				"description": "每种 RGB 颜色的格式为 <code>XXXXXX-XXXXXX-XXXXXX</code>。",
+				"community": {
+					"heading": "社区调色板",
+					"description": "下方展示来自 GitHub 讨论区的调色板。点击任意卡片即可立即应用，或{{communityLinkStart}}分享你的配色{{communityLinkEnd}}。",
+					"loading": "正在加载调色板…",
+					"error": "暂时无法加载调色板，请打开讨论页面手动查看。",
+					"empty": "还没有人分享调色板，欢迎率先贡献！",
+					"applyHint": "点击即可应用此调色板"
+				}
 			}
 		},
 		"accessibility": {
@@ -45,6 +53,7 @@
 	},
 	"notices": {
 		"updateAvailable": "⬆️ {{pluginName}}：有可用的新版本",
-		"resetDone": "✅ 重置完成\n请重新启动 Obsidian"
+		"resetDone": "✅ 重置完成\n请重新启动 Obsidian",
+		"communityPaletteApplied": "🎨 已应用来自 {{author}} 的社区调色板"
 	}
 }
