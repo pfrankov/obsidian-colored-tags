@@ -3,7 +3,9 @@
 <img width="446" alt="Demo" src="https://github.com/pfrankov/obsidian-colored-tags/assets/584632/9ff98fb1-f397-449c-9a22-d5ba1e7bf3d9">
 
 ### Settings with custom palette
-<img width="621" alt="Settings" src="https://github.com/pfrankov/obsidian-colored-tags/assets/584632/033e3cb9-10b5-47fd-acea-2f2ed1a51a23">
+<img width="610" height="708" alt="Settings" src="https://github.com/user-attachments/assets/3065b34f-671d-4cb7-9900-dfed30e35e01" />
+
+
 
 Colorizes tags in different colors. Colors of nested tags are mixed with the root tag to improve readability.
 Text color contrast is automatically matched to comply with AA level of WCAG 2.1.
@@ -21,9 +23,9 @@ The plugin interface is available in multiple languages:
 
 The plugin automatically detects language settings and displays the interface in your preferred language.
 
->**Limitations:**
->- Properties tags can not be styled until fixes in Obsidian.
->- Tags with underscore _ can not be styled properly.
+## Limitations
+- Properties tags can not be styled until fixes in Obsidian.
+- Tags with underscore _ can not be styled properly.
 
 If you need to color individual tags, this plugin is not suitable. Try [Colored Tag Wrangler](https://github.com/code-of-chaos/obsidian-colored_tags_wrangler) instead.
 
@@ -33,7 +35,7 @@ If you need to color individual tags, this plugin is not suitable. Try [Colored 
 - [x] ~~Optimization: append styles instead of replacing each time.~~
 - [x] ~~Change color assignments to predictable cycle from one color to another (breaking change).~~
 - [x] ~~Ability to color non-latin tags~~
-- [ ] Optimization: calculating order in group must be better than O(n^2)
+- [x] Optimization: calculating order in group must be better than O(n^2)
 - [ ] Optimization: remove outdated tags from config on start of plugin
 - [ ] Optimization: save already calculated palettes to avoid unnecessary computations
 - [x] ~~Color blending must use only Hue property~~
