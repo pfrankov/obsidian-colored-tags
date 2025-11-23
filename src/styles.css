@@ -69,7 +69,9 @@
 }
 
 .colored-tags-settings .community-palette-card.is-selected {
-	box-shadow: 0 0 0 2px var(--interactive-accent), var(--input-shadow);
+	box-shadow:
+		0 0 0 2px var(--interactive-accent),
+		var(--input-shadow);
 	cursor: auto;
 }
 
@@ -95,7 +97,9 @@
 }
 
 .colored-tags-settings .community-palette-card.is-selected:hover {
-	box-shadow: 0 0 0 2px var(--interactive-accent), var(--input-shadow);
+	box-shadow:
+		0 0 0 2px var(--interactive-accent),
+		var(--input-shadow);
 }
 
 .colored-tags-settings .community-palette-card:focus-visible {

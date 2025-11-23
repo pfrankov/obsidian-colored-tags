@@ -271,7 +271,8 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		paletteEl: HTMLElement,
 		inputComponent: TextComponent,
 	): HTMLElement {
-		const descriptionId = `community-palette-desc-${this.communityPaletteDescriptionCounter++}`;
+		const descriptionId = `community-palette-desc-${this
+			.communityPaletteDescriptionCounter++}`;
 		const card = gridEl.createDiv({
 			cls: "community-palette-card",
 			attr: {
@@ -314,11 +315,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		});
 
 		const applyPalette = () => {
-			void this.applyCommunityPalette(
-				palette,
-				inputComponent,
-				paletteEl,
-			);
+			void this.applyCommunityPalette(palette, inputComponent, paletteEl);
 		};
 
 		card.addEventListener("click", applyPalette);
@@ -366,9 +363,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 			this.plugin.settings.palette.selected ===
 			ColoredTagsPaletteType.CUSTOM;
 		const normalizedCustom = isCustomSelected
-			? this.normalizePaletteValue(
-				this.plugin.settings.palette.custom,
-			  )
+			? this.normalizePaletteValue(this.plugin.settings.palette.custom)
 			: "";
 		const hasMatch = Boolean(normalizedCustom);
 
