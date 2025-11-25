@@ -44,6 +44,14 @@
 			"gradientTransition": {
 				"name": "渐变过渡"
 			},
+			"tagColors": {
+				"name": "标签颜色分配",
+				"description": "请从当前调色板中选择颜色。更换调色板时，标签会自动适配最接近的颜色。",
+				"placeholder": "开始输入标签",
+				"clear": "重置颜色",
+				"empty": "还没有分配标签颜色",
+				"applyHint": "应用颜色"
+			},
 			"reset": {
 				"name": "重置配置",
 				"description": "🚨 所有标签的颜色都会重新计算，就像第一次启动插件一样。需要重新启动 Obsidian。",

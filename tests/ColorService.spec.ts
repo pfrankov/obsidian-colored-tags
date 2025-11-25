@@ -142,6 +142,26 @@ describe("ColorService", () => {
 			expect(result.linearGradient[0]).toContain("lch");
 			expect(result.linearGradient[1]).toContain("lch");
 		});
+
+		it("applies palette override when provided", () => {
+			const overrideMap = new Map([["parent", 1]]);
+			const palette = ["#ff0000", "#00ff00"];
+			const expected = new Color("#00ff00").to("lch").toString();
+
+			const result = service.getColors(
+				"parent",
+				palette,
+				tagMap,
+				{
+					isMixing: false,
+					isTransition: false,
+					highTextContrast: false,
+				},
+				overrideMap,
+			);
+
+			expect(result.background).toBe(expected);
+		});
 	});
 
 	describe("private methods", () => {
@@ -194,6 +214,13 @@ describe("ColorService", () => {
 				darkerText,
 			);
 			expect((service as any).darkenMemoization.size).toBe(memoSize);
+		});
+
+		it("finds closest color in palette", () => {
+			const palette = ["#ff0000", "#00ff00", "#0000ff"];
+			const index = service.findClosestColorIndex("#f01010", palette);
+
+			expect(index).toBe(0);
 		});
 
 		it("generates non-shuffled adaptive palette", () => {

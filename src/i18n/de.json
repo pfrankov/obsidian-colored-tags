@@ -4,8 +4,8 @@
 			"heading": "Palette",
 			"description": "Palette auswählen",
 			"options": {
-				"adaptiveSoft": "🌸 Adaptive weich",
-				"adaptiveBright": "🌺 Adaptive kräftig",
+				"adaptiveSoft": "🌸 Adaptiv (weich)",
+				"adaptiveBright": "🌺 Adaptiv (kräftig)",
 				"custom": "Benutzerdefiniert"
 			},
 			"shift": {
@@ -21,8 +21,8 @@
 					"description": "Hier findest du Paletten aus der GitHub-Diskussion. Klicke auf eine Karte, um sie sofort zu übernehmen oder {{communityLinkStart}}teile deine eigene{{communityLinkEnd}}.",
 					"loading": "Paletten werden geladen…",
 					"error": "Paletten konnten nicht geladen werden. Öffne die Diskussion, um sie manuell anzusehen.",
-					"empty": "Noch keine Community-Paletten vorhanden. Teile eine!",
-					"applyHint": "Klicke, um diese Palette zu verwenden"
+					"empty": "Noch keine Community-Paletten vorhanden. Sei der Erste, der eine teilt!",
+					"applyHint": "Klicke, um diese Palette anzuwenden"
 				}
 			}
 		},
@@ -43,6 +43,14 @@
 			},
 			"gradientTransition": {
 				"name": "Gradientenübergang"
+			},
+			"tagColors": {
+				"name": "Farbzuweisungen",
+				"description": "Wähle eine Farbe aus der aktuellen Palette. Beim Wechsel der Palette passt sich der Tag automatisch an.",
+				"placeholder": "Tag eingeben",
+				"clear": "Farbe zurücksetzen",
+				"empty": "Noch keine Farbzuweisungen",
+				"applyHint": "Farbe anwenden"
 			},
 			"reset": {
 				"name": "Konfiguration zurücksetzen",

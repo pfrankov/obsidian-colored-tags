@@ -27,7 +27,8 @@ The plugin automatically detects language settings and displays the interface in
 - Properties tags can not be styled until fixes in Obsidian.
 - Tags with underscore _ can not be styled properly.
 
-If you need to color individual tags, this plugin is not suitable. Try [Colored Tag Wrangler](https://github.com/code-of-chaos/obsidian-colored_tags_wrangler) instead.
+## Per-tag colors
+Use **Tag assignments** (in Experimental settings) to pick a color from the current palette for a tag. Custom colors are not supported. If you change palettes, the tag gets the nearest color from the new palette.
 
 ## Roadmap
 - [x] ~~Settings for palette size, base chroma, and base lightness.~~

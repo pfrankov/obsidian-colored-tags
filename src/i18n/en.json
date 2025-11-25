@@ -44,6 +44,14 @@
 			"gradientTransition": {
 				"name": "Gradient transition"
 			},
+			"tagColors": {
+				"name": "Tag assignments",
+				"description": "Choose a color from the current palette. If you change the palette, the tag adapts to the nearest color.",
+				"placeholder": "Start typing a tag",
+				"clear": "Reset color",
+				"empty": "No tag overrides yet",
+				"applyHint": "Apply color"
+			},
 			"reset": {
 				"name": "Reset config",
 				"description": "🚨 All colors of all tags will be recalculated as if it was the first launch of the plugin. Requires restart of Obsidian.",

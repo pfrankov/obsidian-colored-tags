@@ -42,6 +42,7 @@ const createTab = (
 		},
 		saveSettings: options.saveSettings ?? vi.fn(async () => {}),
 		saveData: options.saveData ?? vi.fn(async () => {}),
+		colorizeTag: vi.fn(),
 	};
 	return {
 		app,
@@ -314,13 +315,68 @@ describe("ColoredTagsPluginSettingTab", () => {
 			await tick();
 			expect(plugin.settings.transition).toBe(true);
 			expect(saveSettings).toHaveBeenCalledTimes(2);
+
+			expect(
+				findSetting(tab.containerEl, "Tag assignments"),
+			).toBeTruthy();
+		});
+
+		it("allows assigning palette color to a tag and lists overrides", async () => {
+			const saveSettings = vi.fn(async () => {});
+			const { tab, plugin } = createTab({ saveSettings });
+			tab.showExperimental = true;
+			tab.display();
+
+			const input = tab.containerEl.querySelector(
+				".tag-color-setting__input input",
+			) as HTMLInputElement;
+			const swatch = tab.containerEl.querySelector(
+				".tag-color-setting__swatch",
+			) as HTMLButtonElement;
+			expect(swatch.disabled).toBe(true);
+
+			input.value = "#a";
+			input.dispatchEvent(new Event("input"));
+
+			swatch.dispatchEvent(new Event("click"));
+			await tick();
+
+			expect(plugin.settings.tagColors["a"]).toBe(0);
+			expect(
+				tab.containerEl.querySelectorAll(".tag-color-setting__chip")
+					.length,
+			).toBe(1);
+			expect(saveSettings).toHaveBeenCalled();
+		});
+
+		it("removes tag color assignments via chip action", async () => {
+			const saveSettings = vi.fn(async () => {});
+			const { tab, plugin } = createTab({
+				saveSettings,
+				settings: { tagColors: { a: 0 } },
+			});
+			tab.showExperimental = true;
+			tab.display();
+
+			const removeBtn = tab.containerEl.querySelector(
+				".tag-color-setting__chip-remove",
+			) as HTMLButtonElement;
+			removeBtn.dispatchEvent(new Event("click"));
+			await tick();
+
+			expect(plugin.settings.tagColors).toEqual({});
+			expect(
+				tab.containerEl.querySelectorAll(".tag-color-setting__chip")
+					.length,
+			).toBe(0);
+			expect(saveSettings).toHaveBeenCalled();
 		});
 
 		it("resets config to defaults", async () => {
-			const saveData = vi.fn(async () => {});
+			const saveSettings = vi.fn(async () => {});
 			const { tab, plugin } = createTab({
 				settings: { mixColors: false },
-				saveData,
+				saveSettings,
 			});
 			tab.showExperimental = true;
 			tab.display();
@@ -332,7 +388,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 			resetButton.dispatchEvent(new Event("click"));
 			await tick();
 
-			expect(saveData).toHaveBeenCalled();
+			expect(saveSettings).toHaveBeenCalled();
 			expect(plugin.settings).toEqual(DEFAULT_SETTINGS);
 		});
 	});

@@ -4,6 +4,7 @@ import {
 	ColorProcessorConfig,
 	ColoredTagsPaletteType,
 } from "./interfaces";
+import { normalizePaletteIndex } from "./tagUtils";
 
 export interface ColorResult {
 	background: string;
@@ -77,6 +78,7 @@ export class ColorService {
 			isTransition: boolean;
 			highTextContrast: boolean;
 		},
+		tagColorOverrides?: Map<string, number>,
 	): ColorResult {
 		const chunks = tagName.split("/");
 		const gradientStops = this.calculateGradientStops(
@@ -85,6 +87,7 @@ export class ColorService {
 			tagsMap,
 			options.isMixing,
 			options.isTransition,
+			tagColorOverrides,
 		);
 
 		const backgroundColor = new Color(gradientStops[0]);
@@ -108,6 +111,7 @@ export class ColorService {
 		tagsMap: Map<string, number>,
 		isMixing: boolean,
 		isTransition: boolean,
+		tagColorOverrides?: Map<string, number>,
 	): string[] {
 		const gradientStops: string[] = [];
 		let backgroundColor: Color | null = null;
@@ -117,12 +121,19 @@ export class ColorService {
 		for (const chunk of chunks) {
 			const key = [combinedTag, chunk].filter(Boolean).join("/");
 			const order = tagsMap.get(key) || 1;
+			const overrideIndex = tagColorOverrides?.get(key);
 
-			const filteredPalette = palette.filter(
-				(colorString) => colorString !== lastColor,
-			);
-			const colorFromPalette =
-				filteredPalette[(order - 1) % filteredPalette.length];
+			const filteredPalette =
+				overrideIndex === undefined && palette.length > 1
+					? palette.filter((colorString) => colorString !== lastColor)
+					: [...palette];
+			const paletteToUse =
+				filteredPalette.length > 0 ? filteredPalette : palette;
+			const indexFromPalette =
+				overrideIndex !== undefined
+					? normalizePaletteIndex(overrideIndex, paletteToUse.length)
+					: normalizePaletteIndex(order - 1, paletteToUse.length);
+			const colorFromPalette = paletteToUse[indexFromPalette];
 			lastColor = colorFromPalette;
 
 			let newColor: Color;
@@ -282,5 +293,25 @@ export class ColorService {
 		const cut = result.splice(-seed, seed);
 		result.splice(0, 0, ...cut);
 		return result;
+	}
+
+	findClosestColorIndex(sourceColor: string, palette: string[]): number {
+		if (!palette.length) {
+			return 0;
+		}
+
+		const source = new Color(sourceColor);
+		let bestIndex = 0;
+		let bestDistance = Number.POSITIVE_INFINITY;
+
+		palette.forEach((color, index) => {
+			const distance = source.deltaE2000(new Color(color));
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				bestIndex = index;
+			}
+		});
+
+		return bestIndex;
 	}
 }

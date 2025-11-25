@@ -16,7 +16,8 @@ describe("DEFAULT_SETTINGS", () => {
 				highTextContrast: false,
 			},
 			knownTags: {},
-			_version: 3,
+			tagColors: {},
+			_version: 4,
 		});
 	});
 

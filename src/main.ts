@@ -10,6 +10,7 @@ import { ColorService } from "./ColorService";
 import { CSSManager } from "./CSSManager";
 import { TagManager } from "./TagManager";
 import { I18n } from "./i18n";
+import { normalizePaletteIndex, normalizeTagName } from "./tagUtils";
 
 export default class ColoredTagsPlugin extends Plugin {
 	private static readonly INITIAL_UPDATE_CHECK_DELAY = 5000; // 5 seconds
@@ -22,6 +23,7 @@ export default class ColoredTagsPlugin extends Plugin {
 		light: [] as string[],
 		dark: [] as string[],
 	};
+	private tagColorMap: Map<string, number> = new Map();
 
 	private colorService!: ColorService;
 	private cssManager!: CSSManager;
@@ -116,11 +118,12 @@ export default class ColoredTagsPlugin extends Plugin {
 		}
 	}
 
-	reload() {
+	reload(palettes?: { light: string[]; dark: string[] }) {
 		this.onunload();
-		this.palettes = this.colorService.generatePalettes(
-			this.settings.palette,
-		);
+		this.palettes =
+			palettes ??
+			this.colorService.generatePalettes(this.settings.palette);
+		this.refreshTagColorMap();
 		this.update();
 		this.updatingInterval = window.setInterval(
 			() => this.checkUpdates(),
@@ -129,8 +132,18 @@ export default class ColoredTagsPlugin extends Plugin {
 	}
 
 	async saveSettings() {
+		const previousPalettes = {
+			light: [...this.palettes.light],
+			dark: [...this.palettes.dark],
+		};
+		const nextPalettes = this.colorService.generatePalettes(
+			this.settings.palette,
+		);
+		if (this.havePalettesChanged(previousPalettes, nextPalettes)) {
+			this.remapTagColors(previousPalettes, nextPalettes);
+		}
 		await this.saveData(this.settings);
-		this.reload();
+		this.reload(nextPalettes);
 	}
 
 	colorizeTag(tagName: string) {
@@ -139,11 +152,18 @@ export default class ColoredTagsPlugin extends Plugin {
 		const tagsMap = this.tagManager.getTagsMap();
 
 		const getColors = (palette: string[]) =>
-			this.colorService.getColors(tagName, palette, tagsMap, {
-				isMixing: this.settings.mixColors,
-				isTransition: this.settings.transition,
-				highTextContrast: this.settings.accessibility.highTextContrast,
-			});
+			this.colorService.getColors(
+				tagName,
+				palette,
+				tagsMap,
+				{
+					isMixing: this.settings.mixColors,
+					isTransition: this.settings.transition,
+					highTextContrast:
+						this.settings.accessibility.highTextContrast,
+				},
+				this.tagColorMap,
+			);
 
 		const light = getColors(this.palettes.light);
 		const dark = getColors(this.palettes.dark);
@@ -233,6 +253,12 @@ export default class ColoredTagsPlugin extends Plugin {
 			needToSave = true;
 		}
 
+		if (loadedData && loadedData._version < 4) {
+			loadedData.tagColors = loadedData.tagColors || {};
+			loadedData._version = 4;
+			needToSave = true;
+		}
+
 		const settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
 
 		if (needToSave) {
@@ -246,5 +272,62 @@ export default class ColoredTagsPlugin extends Plugin {
 		this.tagManager.clearRenderedTags();
 		this.cssManager.removeAll();
 		window.clearInterval(this.updatingInterval);
+	}
+
+	private refreshTagColorMap(): void {
+		this.tagColorMap = new Map(
+			Object.entries(this.settings.tagColors || {}).map(
+				([tagName, paletteIndex]) => [
+					normalizeTagName(tagName),
+					paletteIndex,
+				],
+			),
+		);
+	}
+
+	private havePalettesChanged(
+		prev: { light: string[]; dark: string[] },
+		next: { light: string[]; dark: string[] },
+	): boolean {
+		return (
+			prev.light.length !== next.light.length ||
+			prev.dark.length !== next.dark.length ||
+			prev.light.some((color, index) => color !== next.light[index]) ||
+			prev.dark.some((color, index) => color !== next.dark[index])
+		);
+	}
+
+	private remapTagColors(
+		previousPalettes: { light: string[]; dark: string[] },
+		nextPalettes: { light: string[]; dark: string[] },
+	): void {
+		if (!previousPalettes.light.length || !nextPalettes.light.length) {
+			return;
+		}
+
+		const remapped: Record<string, number> = {};
+		const nextPalette = nextPalettes.light;
+		const previousPalette = previousPalettes.light;
+
+		Object.entries(this.settings.tagColors || {}).forEach(
+			([tagName, paletteIndex]) => {
+				const normalizedIndex = normalizePaletteIndex(
+					paletteIndex,
+					previousPalette.length,
+				);
+				const sourceColor = previousPalette[normalizedIndex];
+				const normalizedTagName = normalizeTagName(tagName);
+				if (!normalizedTagName) {
+					return;
+				}
+				const bestMatch = this.colorService.findClosestColorIndex(
+					sourceColor,
+					nextPalette,
+				);
+				remapped[normalizedTagName] = bestMatch;
+			},
+		);
+
+		this.settings.tagColors = remapped;
 	}
 }

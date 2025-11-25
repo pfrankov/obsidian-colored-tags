@@ -15,5 +15,6 @@ export const DEFAULT_SETTINGS: ColoredTagsPluginSettings = {
 		highTextContrast: false,
 	},
 	knownTags: {},
-	_version: 3,
+	tagColors: {},
+	_version: 4,
 };

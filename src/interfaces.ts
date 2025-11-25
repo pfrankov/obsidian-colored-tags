@@ -12,6 +12,9 @@ export interface ColoredTagsPluginSettings {
 	knownTags: {
 		[name: string]: number;
 	};
+	tagColors: {
+		[name: string]: number;
+	};
 	_version: number;
 }
 
