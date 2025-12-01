@@ -3,7 +3,7 @@ import { normalizePaletteIndex, normalizeTagName } from "../src/tagUtils";
 
 describe("tagUtils", () => {
 	it("normalizes tag names by stripping hashes, whitespace, and trailing slashes", () => {
-		expect(normalizeTagName("#Parent/Child/")).toBe("Parent/Child");
+		expect(normalizeTagName("#Parent/Child/")).toBe("parent/child");
 		expect(normalizeTagName("  # spaced /tag // ")).toBe("spaced/tag");
 	});
 

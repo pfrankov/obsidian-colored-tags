@@ -3,7 +3,8 @@ export function normalizeTagName(tagName: string): string {
 		.replace(/#/g, "")
 		.trim()
 		.replace(/\s+/g, "")
-		.replace(/\/+$/, "");
+		.replace(/\/+$/, "")
+		.toLowerCase();
 }
 
 export function normalizePaletteIndex(index: number, length: number): number {

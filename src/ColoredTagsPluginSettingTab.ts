@@ -15,6 +15,8 @@ import {
 	CommunityPalettesService,
 } from "./CommunityPalettesService";
 
+const SELECTED_CLASS = "is-selected";
+
 export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 	plugin: ColoredTagsPlugin;
 	showExperimental = false;
@@ -373,9 +375,9 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		this.communityPaletteCards.forEach((card, value) => {
 			const isSelected = hasMatch && value === normalizedCustom;
 			if (isSelected) {
-				card.classList.add("is-selected");
+				card.classList.add(SELECTED_CLASS);
 			} else {
-				card.classList.remove("is-selected");
+				card.classList.remove(SELECTED_CLASS);
 			}
 			card.setAttribute("aria-pressed", isSelected ? "true" : "false");
 		});
@@ -543,7 +545,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 				null;
 			Array.from(paletteEl.children).forEach((child, index) => {
 				child.classList.toggle(
-					"is-selected",
+					SELECTED_CLASS,
 					assignedIndex !== null &&
 						assignedIndex !== undefined &&
 						normalizePaletteIndex(assignedIndex, palette.length) ===
@@ -683,8 +685,8 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		const metadataTags = Object.keys(
 			this.app.metadataCache?.getTags?.() || {},
 		)
-			.map((tag) => tag.replace(/#/g, ""))
-			.filter((tag) => !tag.match(/\/$/) && tag.length > 0);
+			.map((tag) => normalizeTagName(tag))
+			.filter((tag) => tag.length > 0);
 		metadataTags.forEach((tag) => knownTags.add(tag));
 
 		Array.from(knownTags)

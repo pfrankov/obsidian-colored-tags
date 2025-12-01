@@ -1,5 +1,6 @@
 import { debounce, Notice, Plugin, requestUrl } from "obsidian";
 import { coloredClassApplierPlugin } from "./ColoredClassApplierPlugin";
+import { BaseViewTagApplier } from "./tag-appliers/BaseViewTagApplier";
 import { ColoredTagsPluginSettingTab } from "./ColoredTagsPluginSettingTab";
 import { DEFAULT_SETTINGS } from "./defaultSettings";
 import {
@@ -24,6 +25,7 @@ export default class ColoredTagsPlugin extends Plugin {
 		dark: [] as string[],
 	};
 	private tagColorMap: Map<string, number> = new Map();
+	private baseViewTagApplier = new BaseViewTagApplier();
 
 	private colorService!: ColorService;
 	private cssManager!: CSSManager;
@@ -124,6 +126,7 @@ export default class ColoredTagsPlugin extends Plugin {
 			palettes ??
 			this.colorService.generatePalettes(this.settings.palette);
 		this.refreshTagColorMap();
+		this.baseViewTagApplier.start();
 		this.update();
 		this.updatingInterval = window.setInterval(
 			() => this.checkUpdates(),
@@ -206,6 +209,7 @@ export default class ColoredTagsPlugin extends Plugin {
 
 		const selectors = [
 			`a.tag[href="${tagHref}"]`,
+			`a.tag.colored-tag-${tagLower}`,
 			`.cm-s-obsidian .cm-line span.cm-hashtag.colored-tag-${tagLower}`,
 		];
 
@@ -227,50 +231,51 @@ export default class ColoredTagsPlugin extends Plugin {
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private migrateSettings(loadedData: any): ColoredTagsPluginSettings {
+		const data = loadedData ? { ...loadedData } : {};
+		let currentVersion = data._version ?? 0;
 		let needToSave = false;
 
-		if (loadedData && loadedData._version < 2) {
-			loadedData.palette = 16;
-			loadedData._version = 2;
-			needToSave = true;
-		}
-
-		if (loadedData && loadedData._version < 3) {
-			loadedData.palette = {
-				...DEFAULT_SETTINGS.palette,
-				seed: loadedData.seed || 0,
-			};
-
-			if (loadedData.chroma > 16 || loadedData.lightness > 87) {
-				loadedData.palette.selected =
-					ColoredTagsPaletteType.ADAPTIVE_BRIGHT;
+		const applyMigration = (targetVersion: number, action: () => void) => {
+			if (currentVersion < targetVersion) {
+				action();
+				currentVersion = targetVersion;
+				data._version = targetVersion;
+				needToSave = true;
 			}
+		};
 
-			delete loadedData.chroma;
-			delete loadedData.lightness;
-			delete loadedData.seed;
-			loadedData._version = 3;
-			needToSave = true;
-		}
+		applyMigration(2, () => {
+			data.palette = 16;
+		});
 
-		if (loadedData && loadedData._version < 4) {
-			loadedData.tagColors = loadedData.tagColors || {};
-			loadedData._version = 4;
-			needToSave = true;
-		}
+		applyMigration(3, () => {
+			data.palette = {
+				...DEFAULT_SETTINGS.palette,
+				seed: data.seed || 0,
+			};
+			if (data.chroma > 16 || data.lightness > 87) {
+				data.palette.selected = ColoredTagsPaletteType.ADAPTIVE_BRIGHT;
+			}
+			delete data.chroma;
+			delete data.lightness;
+			delete data.seed;
+		});
 
-		const settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
+		applyMigration(4, () => {
+			data.tagColors = data.tagColors || {};
+		});
 
+		const settings = Object.assign({}, DEFAULT_SETTINGS, data);
 		if (needToSave) {
 			this.saveData(settings);
 		}
-
 		return settings;
 	}
 
 	onunload() {
 		this.tagManager.clearRenderedTags();
 		this.cssManager.removeAll();
+		this.baseViewTagApplier.stop();
 		window.clearInterval(this.updatingInterval);
 	}
 

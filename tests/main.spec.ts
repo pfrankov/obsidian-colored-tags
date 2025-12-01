@@ -102,6 +102,6 @@ describe("ColoredTagsPlugin tag colors", () => {
 
 		(plugin as any).refreshTagColorMap();
 
-		expect((plugin as any).tagColorMap.get("Parent/Child")).toBe(3);
+		expect((plugin as any).tagColorMap.get("parent/child")).toBe(3);
 	});
 });

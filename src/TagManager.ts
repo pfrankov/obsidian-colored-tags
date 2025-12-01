@@ -1,4 +1,5 @@
 import { MetadataCache } from "obsidian";
+import { normalizeTagName } from "./tagUtils";
 
 // Extend MetadataCache to include getTags method that exists in runtime but not in types
 declare module "obsidian" {
@@ -12,7 +13,16 @@ export class TagManager {
 	private renderedTags = new Set<string>();
 
 	constructor(knownTags: Record<string, number>) {
-		this.tagsMap = new Map(Object.entries(knownTags));
+		const normalized = Object.entries(knownTags || {}).reduce<
+			Array<[string, number]>
+		>((acc, [tagName, order]) => {
+			const normalizedName = normalizeTagName(tagName);
+			if (normalizedName) {
+				acc.push([normalizedName, order]);
+			}
+			return acc;
+		}, []);
+		this.tagsMap = new Map(normalized);
 	}
 
 	getTagsMap(): Map<string, number> {
@@ -32,71 +42,72 @@ export class TagManager {
 	}
 
 	async updateKnownTags(metadataCache: MetadataCache): Promise<boolean> {
-		const appTags = Object.keys(metadataCache.getTags())
-			.map((tag) => tag.replace(/#/g, ""))
-			.filter((tag) => !tag.match(/\/$/) && tag.length > 0);
+		const orderedTags = this.collectTagPaths(metadataCache);
+		const nextMap = this.buildOrders(orderedTags);
+		const hasChanges = this.hasChanged(nextMap);
 
-		const allTags = Array.from(
-			new Set([...this.tagsMap.keys(), ...appTags]),
-		);
-
-		let hasChanges = false;
-		for (const tag of allTags) {
-			if (this.assignOrderToTagPath(tag, allTags)) {
-				hasChanges = true;
-			}
+		if (hasChanges) {
+			this.tagsMap = nextMap;
 		}
 
 		return hasChanges;
+	}
+
+	private collectTagPaths(metadataCache: MetadataCache): string[] {
+		const paths = new Set<string>();
+		Object.keys(metadataCache.getTags())
+			.map((tag) => normalizeTagName(tag))
+			.filter((tag) => tag.length > 0 && !tag.match(/\/$/))
+			.forEach((tag) => {
+				const chunks = tag.split("/");
+				let combined = "";
+				for (const chunk of chunks) {
+					combined = combined ? `${combined}/${chunk}` : chunk;
+					paths.add(combined);
+				}
+			});
+
+		return Array.from(paths).sort((a, b) => {
+			const depthDiff = a.split("/").length - b.split("/").length;
+			return depthDiff !== 0 ? depthDiff : a.localeCompare(b);
+		});
+	}
+
+	private buildOrders(tags: string[]): Map<string, number> {
+		const nextMap = new Map<string, number>();
+		const parentMaxOrder = new Map<string, number>();
+
+		for (const tag of tags) {
+			const parentIndex = tag.lastIndexOf("/");
+			const parentKey = parentIndex === -1 ? "" : tag.slice(0, parentIndex);
+			const previousOrder = this.tagsMap.get(tag);
+			const order =
+				previousOrder ?? (parentMaxOrder.get(parentKey) ?? 0) + 1;
+
+			nextMap.set(tag, order);
+			parentMaxOrder.set(
+				parentKey,
+				Math.max(parentMaxOrder.get(parentKey) ?? 0, order),
+			);
+		}
+
+		return nextMap;
+	}
+
+	private hasChanged(nextMap: Map<string, number>): boolean {
+		if (nextMap.size !== this.tagsMap.size) {
+			return true;
+		}
+		for (const [tag, order] of nextMap.entries()) {
+			if (this.tagsMap.get(tag) !== order) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	exportKnownTags(): Record<string, number> {
 		return Object.fromEntries(this.tagsMap.entries());
 	}
 
-	private assignOrderToTagPath(tag: string, allTags: string[]): boolean {
-		const chunks = tag.split("/");
-		let combinedTag = "";
-		let hasChanges = false;
-
-		for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-			const key = [combinedTag, chunks[chunkIndex]]
-				.filter(Boolean)
-				.join("/");
-
-			if (!this.tagsMap.has(key)) {
-				const order = this.calculateOrderForNewTag(
-					key,
-					allTags,
-					chunkIndex,
-					combinedTag,
-				);
-				this.tagsMap.set(key, order);
-				hasChanges = true;
-			}
-
-			combinedTag = key;
-		}
-
-		return hasChanges;
-	}
-
-	private calculateOrderForNewTag(
-		key: string,
-		allTags: string[],
-		depth: number,
-		parentPath: string,
-	): number {
-		const siblings = allTags.filter(
-			(tag) =>
-				tag.split("/").length === depth + 1 &&
-				(parentPath ? tag.startsWith(parentPath) : true),
-		);
-
-		const maxOrder = siblings.reduce((max, sibling) => {
-			return Math.max(max, this.tagsMap.get(sibling) || 0);
-		}, 0);
-
-		return maxOrder + 1;
-	}
 }

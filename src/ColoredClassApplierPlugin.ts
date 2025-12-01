@@ -1,4 +1,9 @@
 import { EditorView, ViewUpdate, ViewPlugin } from "@codemirror/view";
+import {
+	applyColoredTagClass,
+	cleanupColoredTagClasses,
+	normalizeTagText,
+} from "./tag-appliers/TagApplier";
 
 export function applyColoredClasses(domElement: HTMLElement): void {
 	const nodes = Array.from(
@@ -18,9 +23,11 @@ export function applyColoredClasses(domElement: HTMLElement): void {
 			continue;
 		}
 
-		const className = `colored-tag-${text.toLowerCase()}`;
-		cleanupOldClasses(el, currentHashEl, className);
-		applyClassName(el, currentHashEl, className);
+		if (!normalizeTagText(text)) {
+			continue;
+		}
+
+		applyColoredTagClass([el, currentHashEl], text);
 	}
 }
 
@@ -29,12 +36,7 @@ export function cleanupOldClasses(
 	hashEl: HTMLElement,
 	newClassName: string,
 ): void {
-	for (const cls of Array.from(el.classList)) {
-		if (cls.startsWith("colored-tag-") && cls !== newClassName) {
-			el.classList.remove(cls);
-			hashEl.classList.remove(cls);
-		}
-	}
+	cleanupColoredTagClasses([el, hashEl], newClassName);
 }
 
 export function applyClassName(

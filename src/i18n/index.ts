@@ -46,7 +46,8 @@ export class I18n {
 		// Handle string interpolation if params are provided
 		if (params) {
 			Object.entries(params).forEach(([key, value]) => {
-				result = result.replace(`{{${key}}}`, value);
+				const placeholder = new RegExp(`{{${key}}}`, "g");
+				result = result.replace(placeholder, value);
 			});
 		}
 

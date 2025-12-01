@@ -92,6 +92,24 @@ describe("ColoredTagsPluginSettingTab", () => {
 			window.matchMedia = originalMatchMedia;
 		});
 
+		it("falls back to light palette when active palette is empty", () => {
+			const { tab } = createTab({
+				palettes: { light: ["#abcabc"], dark: [] },
+			});
+			const paletteEl = document.createElement("div");
+			const originalMatchMedia = window.matchMedia;
+			window.matchMedia = () => ({ matches: true }) as any;
+
+			tab.renderPalette(paletteEl as any);
+
+			const hasLightColor = Array.from(
+				paletteEl.querySelectorAll("div"),
+			).some((child) => child.getAttribute("style")?.includes("#abcabc"));
+			expect(hasLightColor).toBe(true);
+
+			window.matchMedia = originalMatchMedia;
+		});
+
 		it("renders tags from metadataCache", () => {
 			const { tab } = createTab();
 			const container = document.createElement("div");
@@ -349,6 +367,38 @@ describe("ColoredTagsPluginSettingTab", () => {
 			expect(saveSettings).toHaveBeenCalled();
 		});
 
+		it("does not apply selection when no tag is entered", async () => {
+			const saveSettings = vi.fn(async () => {});
+			const { tab } = createTab({ saveSettings });
+			tab.showExperimental = true;
+			tab.display();
+
+			const swatch = tab.containerEl.querySelector(
+				".tag-color-setting__swatch",
+			) as HTMLButtonElement;
+
+			// Force-enable and click without entering a tag
+			swatch.disabled = false;
+			swatch.dispatchEvent(new Event("click"));
+			await tick();
+
+			expect(saveSettings).not.toHaveBeenCalled();
+		});
+
+		it("shows empty state when no tag assignments exist", () => {
+			const { tab } = createTab({
+				settings: { tagColors: undefined as any },
+			});
+			tab.showExperimental = true;
+			tab.display();
+
+			const emptyState = tab.containerEl.querySelector(
+				".tag-color-setting__empty",
+			);
+
+			expect(emptyState).toBeTruthy();
+		});
+
 		it("removes tag color assignments via chip action", async () => {
 			const saveSettings = vi.fn(async () => {});
 			const { tab, plugin } = createTab({
@@ -370,6 +420,109 @@ describe("ColoredTagsPluginSettingTab", () => {
 					.length,
 			).toBe(0);
 			expect(saveSettings).toHaveBeenCalled();
+		});
+
+		it("refreshes tag color UI when palette changes", () => {
+			const { tab } = createTab();
+			tab.showExperimental = true;
+			const renderPaletteSpy = vi.spyOn(
+				tab as any,
+				"renderPaletteSwatches",
+			);
+			const renderAssignmentsSpy = vi.spyOn(
+				tab as any,
+				"renderTagColorAssignments",
+			);
+
+			tab.display();
+			renderPaletteSpy.mockClear();
+			renderAssignmentsSpy.mockClear();
+
+			(tab as any).notifyPaletteChange();
+
+			expect(renderPaletteSpy).toHaveBeenCalledTimes(1);
+			expect(renderAssignmentsSpy).toHaveBeenCalledTimes(1);
+		});
+
+		it("fills tag input when chip is clicked", () => {
+			const { tab } = createTab({
+				settings: { tagColors: { sample: 0 } },
+			});
+			tab.showExperimental = true;
+			tab.display();
+
+			const chip = tab.containerEl.querySelector(
+				".tag-color-setting__chip a.tag",
+			) as HTMLAnchorElement;
+			const input = tab.containerEl.querySelector(
+				".tag-color-setting__input input",
+			) as HTMLInputElement;
+			chip.dispatchEvent(
+				new Event("click", { bubbles: true, cancelable: true }),
+			);
+
+			expect(input.value).toBe("#sample");
+		});
+
+		it("filters out invalid tags when populating datalist", () => {
+			const app = new App();
+			app.metadataCache.getTags = () => ({
+				"#keep": 1,
+				"#skip/": 1,
+			});
+			const { tab } = createTab({}, app);
+			tab.showExperimental = true;
+			tab.display();
+
+			const options = Array.from(
+				tab.containerEl.querySelectorAll("datalist option"),
+			).map((opt) => opt.getAttribute("value"));
+
+			expect(options).toContain("#keep");
+			expect(options).not.toContain("#skip/");
+		});
+
+		it("handles missing metadataCache when populating datalist", () => {
+			const app = new App();
+			(app as any).metadataCache = undefined;
+			const { tab } = createTab({}, app);
+			const datalist = document.createElement("datalist");
+
+			(tab as any).populateTagOptions(datalist);
+
+			expect(datalist.children.length).toBe(0);
+		});
+
+		it("handles missing getTags method when populating datalist", () => {
+			const app = new App();
+			(app.metadataCache as any).getTags = undefined;
+			const { tab } = createTab({}, app);
+			const datalist = document.createElement("datalist");
+
+			(tab as any).populateTagOptions(datalist);
+
+			expect(datalist.children.length).toBe(0);
+		});
+
+		it("handles missing knownTags config when populating datalist", () => {
+			const { tab } = createTab({
+				settings: { knownTags: undefined as any },
+			});
+			const datalist = document.createElement("datalist");
+
+			(tab as any).populateTagOptions(datalist);
+
+			expect(datalist.children.length).toBeGreaterThan(0);
+		});
+
+		it("calls onChange callback when tag assignments are empty", () => {
+			const { tab } = createTab({ settings: { tagColors: {} } });
+			const listEl = document.createElement("div");
+			const onChange = vi.fn();
+
+			(tab as any).renderTagColorAssignments(listEl, onChange);
+
+			expect(onChange).toHaveBeenCalled();
 		});
 
 		it("resets config to defaults", async () => {
@@ -445,6 +598,58 @@ describe("ColoredTagsPluginSettingTab", () => {
 			);
 			expect(cards[0].classList.contains("is-selected")).toBe(true);
 			expect(cards[0].getAttribute("aria-pressed")).toBe("true");
+			getPalettesSpy.mockRestore();
+		});
+
+		it("applies community palette via keyboard interaction", async () => {
+			const palettesMock: CommunityPalette[] = [
+				{
+					id: "1-0",
+					value: "111111-222222",
+					colors: ["#111111", "#222222"],
+					author: "alpha",
+					score: 3,
+				},
+			];
+			const getPalettesSpy = vi
+				.spyOn(CommunityPalettesService, "getCommunityPalettes")
+				.mockResolvedValue(palettesMock);
+			const { tab, plugin } = createTab({
+				settings: {
+					palette: {
+						selected: ColoredTagsPaletteType.CUSTOM,
+						custom: "",
+						seed: 0,
+					},
+				},
+			});
+			tab.renderPalette = vi.fn();
+			tab.display();
+			await tick();
+
+			const card = tab.containerEl.querySelector(
+				".community-palette-card",
+			) as HTMLElement;
+			const event = new KeyboardEvent("keydown", {
+				key: "Enter",
+				bubbles: true,
+				cancelable: true,
+			});
+			card.dispatchEvent(event);
+			await tick();
+
+			expect(plugin.settings.palette.custom).toBe("111111-222222");
+			expect(card.classList.contains("is-selected")).toBe(true);
+
+			const spaceEvent = new KeyboardEvent("keydown", {
+				key: " ",
+				bubbles: true,
+				cancelable: true,
+			});
+			card.dispatchEvent(spaceEvent);
+			await tick();
+
+			expect(plugin.settings.palette.custom).toBe("111111-222222");
 			getPalettesSpy.mockRestore();
 		});
 
@@ -543,6 +748,17 @@ describe("ColoredTagsPluginSettingTab", () => {
 			expect(cards[0].classList.contains("is-selected")).toBe(false);
 			expect(cards[1].classList.contains("is-selected")).toBe(true);
 			getPalettesSpy.mockRestore();
+		});
+
+		it("clears community palette selection when custom palette is not active", () => {
+			const { tab } = createTab();
+			const card = document.createElement("div");
+			(tab as any).communityPaletteCards.set("value", card);
+
+			(tab as any).updateCommunityPaletteSelection();
+
+			expect(card.classList.contains("is-selected")).toBe(false);
+			expect(card.getAttribute("aria-pressed")).toBe("false");
 		});
 
 		it("shows empty state when no community palettes are available", async () => {

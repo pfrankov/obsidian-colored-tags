@@ -116,45 +116,85 @@ export class ColorService {
 		const gradientStops: string[] = [];
 		let backgroundColor: Color | null = null;
 		let lastColor = "";
-		let combinedTag = "";
+		let currentPath = "";
 
 		for (const chunk of chunks) {
-			const key = [combinedTag, chunk].filter(Boolean).join("/");
+			const key = this.composeTagPath(currentPath, chunk);
 			const order = tagsMap.get(key) || 1;
 			const overrideIndex = tagColorOverrides?.get(key);
 
-			const filteredPalette =
-				overrideIndex === undefined && palette.length > 1
-					? palette.filter((colorString) => colorString !== lastColor)
-					: [...palette];
-			const paletteToUse =
-				filteredPalette.length > 0 ? filteredPalette : palette;
-			const indexFromPalette =
-				overrideIndex !== undefined
-					? normalizePaletteIndex(overrideIndex, paletteToUse.length)
-					: normalizePaletteIndex(order - 1, paletteToUse.length);
-			const colorFromPalette = paletteToUse[indexFromPalette];
+			const paletteForChunk = this.getPaletteForChunk(
+				palette,
+				lastColor,
+				overrideIndex,
+			);
+			const colorFromPalette = this.pickColorFromPalette(
+				paletteForChunk,
+				order,
+				overrideIndex,
+			);
 			lastColor = colorFromPalette;
 
-			let newColor: Color;
-			if (backgroundColor && isMixing) {
-				newColor = this.mixColors(
-					backgroundColor,
-					colorFromPalette,
-					isTransition,
-				);
-			} else {
-				newColor = new Color(colorFromPalette).to("lch");
-			}
+			const newColor = this.buildColorForChunk(
+				backgroundColor,
+				colorFromPalette,
+				isMixing,
+				isTransition,
+			);
 
 			if (!backgroundColor) {
 				backgroundColor = newColor;
-				combinedTag = key;
 			}
 
 			gradientStops.push(newColor.toString({ format: "lch" }));
+			currentPath = key;
 		}
 		return gradientStops;
+	}
+
+	private composeTagPath(parentPath: string, chunk: string): string {
+		return parentPath ? `${parentPath}/${chunk}` : chunk;
+	}
+
+	private getPaletteForChunk(
+		palette: string[],
+		lastColor: string,
+		overrideIndex?: number,
+	): string[] {
+		if (overrideIndex !== undefined || palette.length <= 1) {
+			return palette;
+		}
+
+		const filtered = palette.filter((color) => color !== lastColor);
+		return filtered.length > 0 ? filtered : palette;
+	}
+
+	private pickColorFromPalette(
+		palette: string[],
+		order: number,
+		overrideIndex: number | undefined,
+	): string {
+		const indexSource =
+			overrideIndex !== undefined ? overrideIndex : order - 1;
+		const index = normalizePaletteIndex(indexSource, palette.length);
+		return palette[index];
+	}
+
+	private buildColorForChunk(
+		backgroundColor: Color | null,
+		colorFromPalette: string,
+		isMixing: boolean,
+		isTransition: boolean,
+	): Color {
+		if (backgroundColor && isMixing) {
+			return this.mixColors(
+				backgroundColor,
+				colorFromPalette,
+				isTransition,
+			);
+		}
+
+		return new Color(colorFromPalette).to("lch");
 	}
 
 	private mixColors(

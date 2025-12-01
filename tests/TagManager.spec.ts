@@ -56,4 +56,55 @@ describe("TagManager", () => {
 		expect(tagsMap.get("parent/child1")).toBe(1);
 		expect(tagsMap.get("parent/child2")).toBe(2);
 	});
+
+	it("removes tags that are no longer present in metadata", async () => {
+		const manager = new TagManager({ keep: 1, drop: 2 });
+		const metadataCache = {
+			getTags: () => ({ "#KEEP": 1 }),
+		} as any;
+
+		const changed = await manager.updateKnownTags(metadataCache);
+
+		expect(changed).toBe(true);
+		expect(manager.getTagsMap().has("drop")).toBe(false);
+		expect(manager.getTagsMap().has("keep")).toBe(true);
+	});
+
+	it("detects unchanged maps without flagging updates", () => {
+		const manager = new TagManager({ stable: 1 });
+		(manager as any).tagsMap = new Map([["stable", 1]]);
+
+		const result = (manager as any).hasChanged(new Map([["stable", 1]]));
+
+		expect(result).toBe(false);
+	});
+
+	it("detects reorders when sizes match", () => {
+		const manager = new TagManager({ a: 1, b: 2 });
+		(manager as any).tagsMap = new Map([
+			["a", 1],
+			["b", 2],
+		]);
+
+		const result = (manager as any).hasChanged(
+			new Map([
+				["a", 2],
+				["b", 1],
+			]),
+		);
+
+		expect(result).toBe(true);
+	});
+
+	it("ignores invalid tag names on construction", () => {
+		const manager = new TagManager({ "#": 1, "   ": 2 });
+
+		expect(manager.getTagsMap().size).toBe(0);
+	});
+
+	it("handles missing knownTags input gracefully", () => {
+		const manager = new TagManager(undefined as any);
+
+		expect(manager.getTagsMap().size).toBe(0);
+	});
 });

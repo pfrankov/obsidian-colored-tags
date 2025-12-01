@@ -223,6 +223,21 @@ describe("ColorService", () => {
 			expect(index).toBe(0);
 		});
 
+		it("returns zero when palette is empty", () => {
+			expect(service.findClosestColorIndex("#f01010", [])).toBe(0);
+		});
+
+		it("falls back to original palette when filtering removes all colors", () => {
+			const palette = ["#111111", "#111111"];
+			const result = (service as any).getPaletteForChunk(
+				palette,
+				"#111111",
+				undefined,
+			);
+
+			expect(result).toEqual(palette);
+		});
+
 		it("generates non-shuffled adaptive palette", () => {
 			const config = {
 				isDarkTheme: false,

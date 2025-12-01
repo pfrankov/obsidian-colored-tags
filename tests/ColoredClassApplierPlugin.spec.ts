@@ -73,6 +73,54 @@ describe("ColoredClassApplierPlugin", () => {
 		).toBe(false);
 	});
 
+	it("skips tags that normalize to empty text", () => {
+		const container = document.createElement("div");
+		const hashEl = document.createElement("span");
+		hashEl.className = "cm-hashtag";
+		hashEl.innerText = "#";
+		const emptyTag = document.createElement("span");
+		emptyTag.className = "cm-hashtag";
+		emptyTag.innerText = "#";
+
+		container.append(hashEl, emptyTag);
+		applyColoredClasses(container);
+
+		expect(
+			Array.from(emptyTag.classList).some((cls) =>
+				cls.startsWith("colored-tag-"),
+			),
+		).toBe(false);
+		expect(
+			Array.from(hashEl.classList).some((cls) =>
+				cls.startsWith("colored-tag-"),
+			),
+		).toBe(false);
+	});
+
+	it("skips tags with whitespace only text", () => {
+		const container = document.createElement("div");
+		const hashEl = document.createElement("span");
+		hashEl.className = "cm-hashtag";
+		hashEl.innerText = "#";
+		const emptyTag = document.createElement("span");
+		emptyTag.className = "cm-hashtag";
+		emptyTag.innerText = "   ";
+
+		container.append(hashEl, emptyTag);
+		applyColoredClasses(container);
+
+		expect(
+			Array.from(emptyTag.classList).some((cls) =>
+				cls.startsWith("colored-tag-"),
+			),
+		).toBe(false);
+		expect(
+			Array.from(hashEl.classList).some((cls) =>
+				cls.startsWith("colored-tag-"),
+			),
+		).toBe(false);
+	});
+
 	it("integrates with EditorView lifecycle", () => {
 		const view = new EditorView({
 			state: EditorState.create({ doc: "#tag" }),
