@@ -194,4 +194,26 @@ describe("TagApplier helpers", () => {
 		scheduled[0](0 as any);
 		expect(applySpy).toHaveBeenCalledTimes(2);
 	});
+
+	it("applies colored classes to custom targets", () => {
+		const pill = document.createElement("div");
+		pill.className = "tag";
+		pill.textContent = "#tag";
+
+		const remove = document.createElement("button");
+		pill.appendChild(remove);
+
+		const applier = new TagApplier({
+			selector: ".tag",
+			getTagTargets: (el) => [
+				el,
+				...Array.from(el.querySelectorAll("button")),
+			],
+		});
+
+		applier.apply(pill);
+
+		expect(pill.classList.contains("colored-tag-tag")).toBe(true);
+		expect(remove.classList.contains("colored-tag-tag")).toBe(true);
+	});
 });

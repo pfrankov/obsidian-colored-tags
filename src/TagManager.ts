@@ -79,7 +79,8 @@ export class TagManager {
 
 		for (const tag of tags) {
 			const parentIndex = tag.lastIndexOf("/");
-			const parentKey = parentIndex === -1 ? "" : tag.slice(0, parentIndex);
+			const parentKey =
+				parentIndex === -1 ? "" : tag.slice(0, parentIndex);
 			const previousOrder = this.tagsMap.get(tag);
 			const order =
 				previousOrder ?? (parentMaxOrder.get(parentKey) ?? 0) + 1;
@@ -109,5 +110,4 @@ export class TagManager {
 	exportKnownTags(): Record<string, number> {
 		return Object.fromEntries(this.tagsMap.entries());
 	}
-
 }

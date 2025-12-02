@@ -55,10 +55,13 @@ export const defaultTagTextGetter: TagTextGetter = (el) => {
 	return text ? text.trim() : null;
 };
 
+type TagTargetsGetter = (el: HTMLElement) => HTMLElement[];
+
 export function applyColoredTagClassesInRoot(
 	root: ParentNode,
 	selector: string,
 	getTagText: TagTextGetter = defaultTagTextGetter,
+	getTagTargets: TagTargetsGetter = (el) => [el],
 ): void {
 	const candidates: HTMLElement[] = [];
 
@@ -71,29 +74,37 @@ export function applyColoredTagClassesInRoot(
 	});
 
 	for (const el of candidates) {
-		applyColoredTagClass([el], getTagText(el));
+		applyColoredTagClass(getTagTargets(el), getTagText(el));
 	}
 }
 
 export interface TagApplierOptions {
 	selector: string;
 	getTagText?: TagTextGetter;
+	getTagTargets?: TagTargetsGetter;
 }
 
 export class TagApplier {
 	private observer?: MutationObserver;
 	private readonly selector: string;
 	private readonly getTagText: TagTextGetter;
+	private readonly getTagTargets: TagTargetsGetter;
 	private pendingNodes = new Set<ParentNode>();
 	private flushHandle: number | null = null;
 
 	constructor(options: TagApplierOptions) {
 		this.selector = options.selector;
 		this.getTagText = options.getTagText ?? defaultTagTextGetter;
+		this.getTagTargets = options.getTagTargets ?? ((el) => [el]);
 	}
 
 	apply(root: ParentNode = document.body): void {
-		applyColoredTagClassesInRoot(root, this.selector, this.getTagText);
+		applyColoredTagClassesInRoot(
+			root,
+			this.selector,
+			this.getTagText,
+			this.getTagTargets,
+		);
 	}
 
 	start(root: ParentNode = document.body): void {

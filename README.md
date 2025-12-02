@@ -6,7 +6,6 @@
 <img width="610" height="708" alt="Settings" src="https://github.com/user-attachments/assets/3065b34f-671d-4cb7-9900-dfed30e35e01" />
 
 
-
 Colorizes tags in different colors. Colors of nested tags are mixed with the root tag to improve readability.
 Text color contrast is automatically matched to comply with AA level of WCAG 2.1.
 The colors are adjusted for the dark theme as well.
@@ -24,7 +23,6 @@ The plugin interface is available in multiple languages:
 The plugin automatically detects language settings and displays the interface in your preferred language.
 
 ## Limitations
-- Properties tags can not be styled until fixes in Obsidian.
 - Tags with underscore _ can not be styled properly.
 
 ## Per-tag colors

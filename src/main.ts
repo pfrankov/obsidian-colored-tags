@@ -12,6 +12,7 @@ import { CSSManager } from "./CSSManager";
 import { TagManager } from "./TagManager";
 import { I18n } from "./i18n";
 import { normalizePaletteIndex, normalizeTagName } from "./tagUtils";
+import { PropertiesTagApplier } from "./tag-appliers/PropertiesTagApplier";
 
 export default class ColoredTagsPlugin extends Plugin {
 	private static readonly INITIAL_UPDATE_CHECK_DELAY = 5000; // 5 seconds
@@ -26,6 +27,7 @@ export default class ColoredTagsPlugin extends Plugin {
 	};
 	private tagColorMap: Map<string, number> = new Map();
 	private baseViewTagApplier = new BaseViewTagApplier();
+	private propertiesTagApplier = new PropertiesTagApplier();
 
 	private colorService!: ColorService;
 	private cssManager!: CSSManager;
@@ -127,6 +129,7 @@ export default class ColoredTagsPlugin extends Plugin {
 			this.colorService.generatePalettes(this.settings.palette);
 		this.refreshTagColorMap();
 		this.baseViewTagApplier.start();
+		this.propertiesTagApplier.start();
 		this.update();
 		this.updatingInterval = window.setInterval(
 			() => this.checkUpdates(),
@@ -172,6 +175,7 @@ export default class ColoredTagsPlugin extends Plugin {
 		const dark = getColors(this.palettes.dark);
 
 		const selectors = this.buildTagSelectors(tagName);
+		const removeButtonSelectors = this.buildRemoveButtonSelectors(tagName);
 		const groups: Array<{
 			prefix: string;
 			colors: {
@@ -184,18 +188,37 @@ export default class ColoredTagsPlugin extends Plugin {
 			{ prefix: "body.theme-dark", colors: dark },
 		];
 
+		const buildScopedSelector = (prefix: string, base: string[]) =>
+			base.length ? base.map((s) => `${prefix} ${s}`).join(", ") : "";
+
 		const css = groups
 			.map(({ prefix, colors }) => {
-				const scoped = selectors
-					.map((s) => `${prefix} ${s}`)
-					.join(", ");
-				return `${scoped} {\n\tbackground-color: ${
-					colors.background
-				};\n\tcolor: ${
-					colors.color
-				};\n\tbackground-image: linear-gradient(108deg, ${colors.linearGradient.join(
-					", ",
-				)});\n\t}`;
+				const scopedTags = buildScopedSelector(prefix, selectors);
+				const scopedButtons = buildScopedSelector(
+					prefix,
+					removeButtonSelectors,
+				);
+
+				const rules: string[] = [];
+				if (scopedTags) {
+					rules.push(
+						`${scopedTags} {\n\tbackground-color: ${
+							colors.background
+						};\n\tcolor: ${
+							colors.color
+						};\n\tbackground-image: linear-gradient(108deg, ${colors.linearGradient.join(
+							", ",
+						)});\n\t}`,
+					);
+				}
+
+				if (scopedButtons) {
+					rules.push(
+						`${scopedButtons} {\n\tcolor: ${colors.color};\n\tstroke: ${colors.color};\n\t}`,
+					);
+				}
+
+				return rules.join("\n");
 			})
 			.join("\n");
 
@@ -211,6 +234,7 @@ export default class ColoredTagsPlugin extends Plugin {
 			`a.tag[href="${tagHref}"]`,
 			`a.tag.colored-tag-${tagLower}`,
 			`.cm-s-obsidian .cm-line span.cm-hashtag.colored-tag-${tagLower}`,
+			`.metadata-property[data-property-key="tags" i] .multi-select-pill.colored-tag-${tagLower}`,
 		];
 
 		if (tagFlat) {
@@ -222,6 +246,15 @@ export default class ColoredTagsPlugin extends Plugin {
 		}
 
 		return selectors;
+	}
+
+	private buildRemoveButtonSelectors(tagName: string): string[] {
+		const tagLower = tagName.toLowerCase().replace(/\//g, "\\/");
+		return tagLower
+			? [
+					`.metadata-property[data-property-key="tags" i] .multi-select-pill-remove-button.colored-tag-${tagLower}`,
+				]
+			: [];
 	}
 
 	async loadSettings() {
@@ -276,6 +309,7 @@ export default class ColoredTagsPlugin extends Plugin {
 		this.tagManager.clearRenderedTags();
 		this.cssManager.removeAll();
 		this.baseViewTagApplier.stop();
+		this.propertiesTagApplier.stop();
 		window.clearInterval(this.updatingInterval);
 	}
 

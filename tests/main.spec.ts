@@ -60,6 +60,20 @@ describe("ColoredTagsPlugin tag colors", () => {
 		expect(calls[1][4]).toBe((plugin as any).tagColorMap);
 	});
 
+	it("includes property tag selectors in generated styles", () => {
+		const plugin = createPlugin();
+
+		plugin.colorizeTag("excalidraw");
+
+		const css = ((plugin as any).cssManager.append as any).mock.calls[0][0];
+		expect(css).toContain(
+			'body .metadata-property[data-property-key="tags" i] .multi-select-pill.colored-tag-excalidraw',
+		);
+		expect(css).toContain(
+			'body .metadata-property[data-property-key="tags" i] .multi-select-pill-remove-button.colored-tag-excalidraw',
+		);
+	});
+
 	it("remaps tag colors to the closest match when palettes change", () => {
 		const plugin = createPlugin();
 		plugin.settings.tagColors = { "#tag/": -1, " other ": 2, "#": 0 };
