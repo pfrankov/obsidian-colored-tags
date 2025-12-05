@@ -1,0 +1,67 @@
+{
+	"settings": {
+		"palette": {
+			"heading": "Paleta",
+			"description": "Seleccionar paleta",
+			"options": {
+				"adaptiveSoft": "🌸 Suave adaptable",
+				"adaptiveBright": "🌺 Brillante adaptable",
+				"custom": "Personalizada"
+			},
+			"shift": {
+				"name": "Desplazamiento de paleta",
+				"description": "Si los colores de algunas etiquetas no encajan, puedes desplazar la paleta."
+			},
+			"custom": {
+				"name": "Paleta personalizada",
+				"placeholder": "Pegar paleta",
+				"description": "El formato es <code>XXXXXX-XXXXXX-XXXXXX</code> para cada color RGB.",
+				"community": {
+					"heading": "Paletas de la comunidad",
+					"description": "A continuación hay paletas recopiladas de la discusión en GitHub. Haz clic en cualquier tarjeta para aplicarla al instante o {{communityLinkStart}}comparte la tuya{{communityLinkEnd}}.",
+					"loading": "Cargando paletas…",
+					"error": "No se pueden cargar las paletas en este momento. Siéntete libre de abrir la discusión para explorarlas manualmente.",
+					"empty": "Aún no hay paletas compartidas. ¡Sé el primero en publicar una!",
+					"applyHint": "Haz clic para aplicar esta paleta"
+				}
+			}
+		},
+		"accessibility": {
+			"heading": "🦾 Accesibilidad",
+			"description": "Mostrar opciones de accesibilidad",
+			"highTextContrast": {
+				"name": "Alto contraste de texto",
+				"description": "Usar solo colores blanco y negro para los textos"
+			}
+		},
+		"experimental": {
+			"heading": "🧪 Experimental",
+			"description": "Acciones peligrosas u opciones inestables que podrían cambiarse o eliminarse en cualquier momento",
+			"mixColors": {
+				"name": "Mezclar colores",
+				"description": "Ayuda a hacer el texto legible"
+			},
+			"gradientTransition": {
+				"name": "Transición de degradado"
+			},
+			"tagColors": {
+				"name": "Asignaciones de etiquetas",
+				"description": "Elige un color de la paleta actual. Si cambias la paleta, la etiqueta se adapta al color más cercano.",
+				"placeholder": "Empieza a escribir una etiqueta",
+				"clear": "Restablecer color",
+				"empty": "Aún no hay anulaciones de etiquetas",
+				"applyHint": "Aplicar color"
+			},
+			"reset": {
+				"name": "Restablecer configuración",
+				"description": "🚨 Todos los colores de todas las etiquetas se recalcularán como si fuera el primer lanzamiento del plugin. Requiere reiniciar Obsidian.",
+				"button": "Restablecer"
+			}
+		}
+	},
+	"notices": {
+		"updateAvailable": "⬆️ {{pluginName}}: hay una nueva versión disponible",
+		"resetDone": "✅ Restablecimiento completado\nPor favor, reinicia Obsidian",
+		"communityPaletteApplied": "🎨 Paleta de la comunidad aplicada por {{author}}"
+	}
+}

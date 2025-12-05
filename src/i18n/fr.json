@@ -1,0 +1,67 @@
+{
+	"settings": {
+		"palette": {
+			"heading": "Palette",
+			"description": "Sélectionner une palette",
+			"options": {
+				"adaptiveSoft": "🌸 Doux adaptatif",
+				"adaptiveBright": "🌺 Vif adaptatif",
+				"custom": "Personnalisée"
+			},
+			"shift": {
+				"name": "Décalage de palette",
+				"description": "Si les couleurs de certaines étiquettes ne conviennent pas, vous pouvez décaler la palette."
+			},
+			"custom": {
+				"name": "Palette personnalisée",
+				"placeholder": "Coller une palette",
+				"description": "Le format est <code>XXXXXX-XXXXXX-XXXXXX</code> pour chaque couleur RVB.",
+				"community": {
+					"heading": "Palettes communautaires",
+					"description": "Ci-dessous se trouvent des palettes collectées depuis la discussion GitHub. Cliquez sur une carte pour l'appliquer instantanément ou {{communityLinkStart}}partagez la vôtre{{communityLinkEnd}}.",
+					"loading": "Chargement des palettes…",
+					"error": "Impossible de charger les palettes pour le moment. N'hésitez pas à ouvrir la discussion pour les parcourir manuellement.",
+					"empty": "Aucune palette partagée pour l'instant. Soyez le premier à en publier une !",
+					"applyHint": "Cliquez pour appliquer cette palette"
+				}
+			}
+		},
+		"accessibility": {
+			"heading": "🦾 Accessibilité",
+			"description": "Afficher les options d'accessibilité",
+			"highTextContrast": {
+				"name": "Contraste de texte élevé",
+				"description": "Utiliser uniquement le blanc et le noir pour les textes"
+			}
+		},
+		"experimental": {
+			"heading": "🧪 Expérimental",
+			"description": "Actions dangereuses ou options instables qui pourraient être modifiées ou supprimées à tout moment",
+			"mixColors": {
+				"name": "Mélanger les couleurs",
+				"description": "Cela aide à rendre le texte lisible"
+			},
+			"gradientTransition": {
+				"name": "Transition de dégradé"
+			},
+			"tagColors": {
+				"name": "Affectations d'étiquettes",
+				"description": "Choisissez une couleur de la palette actuelle. Si vous changez la palette, l'étiquette s'adapte à la couleur la plus proche.",
+				"placeholder": "Commencez à taper une étiquette",
+				"clear": "Réinitialiser la couleur",
+				"empty": "Aucune substitution d'étiquette pour l'instant",
+				"applyHint": "Appliquer la couleur"
+			},
+			"reset": {
+				"name": "Réinitialiser la config",
+				"description": "🚨 Toutes les couleurs de toutes les étiquettes seront recalculées comme lors du premier lancement du plugin. Nécessite le redémarrage d'Obsidian.",
+				"button": "Réinitialiser"
+			}
+		}
+	},
+	"notices": {
+		"updateAvailable": "⬆️ {{pluginName}} : une nouvelle version est disponible",
+		"resetDone": "✅ Réinitialisation terminée\nVeuillez redémarrer Obsidian",
+		"communityPaletteApplied": "🎨 Palette communautaire appliquée par {{author}}"
+	}
+}

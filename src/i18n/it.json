@@ -1,0 +1,67 @@
+{
+	"settings": {
+		"palette": {
+			"heading": "Tavolozza",
+			"description": "Seleziona tavolozza",
+			"options": {
+				"adaptiveSoft": "🌸 Adattiva tenue",
+				"adaptiveBright": "🌺 Adattiva vivace",
+				"custom": "Personalizzata"
+			},
+			"shift": {
+				"name": "Spostamento tavolozza",
+				"description": "Se i colori di alcune etichette non vanno bene, puoi spostare la tavolozza."
+			},
+			"custom": {
+				"name": "Tavolozza personalizzata",
+				"placeholder": "Incolla tavolozza",
+				"description": "Il formato è <code>XXXXXX-XXXXXX-XXXXXX</code> per ogni colore RGB.",
+				"community": {
+					"heading": "Tavolozze della comunità",
+					"description": "Di seguito sono riportate le tavolozze raccolte dalla discussione su GitHub. Clicca su qualsiasi scheda per applicarla istantaneamente o {{communityLinkStart}}condividi la tua{{communityLinkEnd}}.",
+					"loading": "Caricamento tavolozze…",
+					"error": "Impossibile caricare le tavolozze al momento. Sentiti libero di aprire la discussione per sfogliarle manualmente.",
+					"empty": "Nessuna tavolozza condivisa ancora. Sii il primo a pubblicarne una!",
+					"applyHint": "Clicca per applicare questa tavolozza"
+				}
+			}
+		},
+		"accessibility": {
+			"heading": "🦾 Accessibilità",
+			"description": "Mostra opzioni di accessibilità",
+			"highTextContrast": {
+				"name": "Alto contrasto del testo",
+				"description": "Usa solo bianco e nero per i testi"
+			}
+		},
+		"experimental": {
+			"heading": "🧪 Sperimentale",
+			"description": "Azioni pericolose o opzioni instabili che potrebbero essere modificate o rimosse in qualsiasi momento",
+			"mixColors": {
+				"name": "Mescola colori",
+				"description": "Aiuta a rendere leggibile il testo"
+			},
+			"gradientTransition": {
+				"name": "Transizione gradiente"
+			},
+			"tagColors": {
+				"name": "Assegnazioni etichette",
+				"description": "Scegli un colore dalla tavolozza corrente. Se cambi la tavolozza, l'etichetta si adatta al colore più vicino.",
+				"placeholder": "Inizia a digitare un'etichetta",
+				"clear": "Reimposta colore",
+				"empty": "Nessuna sovrascrittura etichetta ancora",
+				"applyHint": "Applica colore"
+			},
+			"reset": {
+				"name": "Reimposta configurazione",
+				"description": "🚨 Tutti i colori di tutte le etichette verranno ricalcolati come se fosse il primo avvio del plugin. Richiede il riavvio di Obsidian.",
+				"button": "Reimposta"
+			}
+		}
+	},
+	"notices": {
+		"updateAvailable": "⬆️ {{pluginName}}: è disponibile una nuova versione",
+		"resetDone": "✅ Reimpostazione completata\nSi prega di riavviare Obsidian",
+		"communityPaletteApplied": "🎨 Tavolozza della comunità applicata da {{author}}"
+	}
+}

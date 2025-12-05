@@ -1,5 +1,10 @@
 import de from "./de.json";
 import en from "./en.json";
+import es from "./es.json";
+import fr from "./fr.json";
+import it from "./it.json";
+import ja from "./ja.json";
+import pt from "./pt.json";
 import ru from "./ru.json";
 import zh from "./zh.json";
 import { logger } from "../logger";
@@ -13,6 +18,11 @@ const locales: Record<string, TranslationTree> = {
 	ru: ru as TranslationTree,
 	de: de as TranslationTree,
 	zh: zh as TranslationTree,
+	es: es as TranslationTree,
+	fr: fr as TranslationTree,
+	it: it as TranslationTree,
+	pt: pt as TranslationTree,
+	ja: ja as TranslationTree,
 };
 
 export class I18n {

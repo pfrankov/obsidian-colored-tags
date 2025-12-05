@@ -18,7 +18,6 @@ export default class ColoredTagsPlugin extends Plugin {
 	private static readonly INITIAL_UPDATE_CHECK_DELAY = 5000; // 5 seconds
 	private static readonly EDITOR_CHANGE_DEBOUNCE = 3000; // 3 seconds
 	private static readonly LEAF_CHANGE_DEBOUNCE = 300; // 300ms
-	private static readonly UPDATE_CHECK_INTERVAL = 10800000; // 3 hours
 
 	settings!: ColoredTagsPluginSettings;
 	palettes = {
@@ -32,7 +31,6 @@ export default class ColoredTagsPlugin extends Plugin {
 	private colorService!: ColorService;
 	private cssManager!: CSSManager;
 	private tagManager!: TagManager;
-	private updatingInterval!: number;
 
 	async onload() {
 		await this.loadSettings();
@@ -131,10 +129,6 @@ export default class ColoredTagsPlugin extends Plugin {
 		this.baseViewTagApplier.start();
 		this.propertiesTagApplier.start();
 		this.update();
-		this.updatingInterval = window.setInterval(
-			() => this.checkUpdates(),
-			ColoredTagsPlugin.UPDATE_CHECK_INTERVAL,
-		);
 	}
 
 	async saveSettings() {
@@ -310,7 +304,6 @@ export default class ColoredTagsPlugin extends Plugin {
 		this.cssManager.removeAll();
 		this.baseViewTagApplier.stop();
 		this.propertiesTagApplier.stop();
-		window.clearInterval(this.updatingInterval);
 	}
 
 	private refreshTagColorMap(): void {

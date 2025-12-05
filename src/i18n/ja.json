@@ -1,0 +1,67 @@
+{
+	"settings": {
+		"palette": {
+			"heading": "パレット",
+			"description": "パレットを選択",
+			"options": {
+				"adaptiveSoft": "🌸 アダプティブソフト",
+				"adaptiveBright": "🌺 アダプティブブライト",
+				"custom": "カスタム"
+			},
+			"shift": {
+				"name": "パレットシフト",
+				"description": "一部のタグの色が合わない場合は、パレットをシフトできます。"
+			},
+			"custom": {
+				"name": "カスタムパレット",
+				"placeholder": "パレットを貼り付け",
+				"description": "形式は各RGBカラーにつき <code>XXXXXX-XXXXXX-XXXXXX</code> です。",
+				"community": {
+					"heading": "コミュニティパレット",
+					"description": "以下はGitHubのディスカッションから収集されたパレットです。カードをクリックして即座に適用するか、{{communityLinkStart}}自分のものを共有{{communityLinkEnd}}してください。",
+					"loading": "パレットを読み込み中…",
+					"error": "現在パレットを読み込めません。ディスカッションを開いて手動で閲覧してください。",
+					"empty": "共有されたパレットはまだありません。最初に投稿しましょう！",
+					"applyHint": "クリックしてこのパレットを適用"
+				}
+			}
+		},
+		"accessibility": {
+			"heading": "🦾 アクセシビリティ",
+			"description": "アクセシビリティオプションを表示",
+			"highTextContrast": {
+				"name": "高テキストコントラスト",
+				"description": "テキストに白と黒の色のみを使用"
+			}
+		},
+		"experimental": {
+			"heading": "🧪 実験的",
+			"description": "いつでも変更または削除される可能性のある危険なアクションまたは不安定なオプション",
+			"mixColors": {
+				"name": "色を混ぜる",
+				"description": "テキストを読みやすくするのに役立ちます"
+			},
+			"gradientTransition": {
+				"name": "グラデーション遷移"
+			},
+			"tagColors": {
+				"name": "タグの割り当て",
+				"description": "現在のパレットから色を選択します。パレットを変更すると、タグは最も近い色に適応します。",
+				"placeholder": "タグの入力を開始",
+				"clear": "色をリセット",
+				"empty": "タグのオーバーライドはまだありません",
+				"applyHint": "色を適用"
+			},
+			"reset": {
+				"name": "設定をリセット",
+				"description": "🚨 すべてのタグのすべての色が、プラグインの初回起動時のように再計算されます。Obsidianの再起動が必要です。",
+				"button": "リセット"
+			}
+		}
+	},
+	"notices": {
+		"updateAvailable": "⬆️ {{pluginName}}: 新しいバージョンが利用可能です",
+		"resetDone": "✅ リセットが完了しました\nObsidianを再起動してください",
+		"communityPaletteApplied": "🎨 {{author}} によるコミュニティパレットが適用されました"
+	}
+}

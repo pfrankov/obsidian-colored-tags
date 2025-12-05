@@ -16,9 +16,14 @@ The main idea of the plugin is to make tags visually different from each other, 
 
 The plugin interface is available in multiple languages:
 - English
+- Español (Spanish)
+- Français (French)
+- Italiano (Italian)
+- Português (Portuguese)
 - Deutsch (German)
 - Русский (Russian)
 - 中文 (Chinese)
+- 日本語 (Japanese)
 
 The plugin automatically detects language settings and displays the interface in your preferred language.
 
