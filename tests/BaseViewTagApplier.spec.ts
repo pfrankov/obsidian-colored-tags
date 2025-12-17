@@ -98,4 +98,21 @@ describe("BaseViewTagApplier", () => {
 
 		applier.stop();
 	});
+
+	it("adds classes to regular markdown tag links", () => {
+		const applier = new BaseViewTagApplier();
+		const root = document.createElement("div");
+
+		const tag = document.createElement("a");
+		tag.className = "tag";
+		tag.setAttribute("href", "#okinbothmodes");
+		tag.textContent = "#okinbothmodes";
+		root.appendChild(tag);
+
+		applier.start(root);
+
+		expect(tag.classList.contains("colored-tag-okinbothmodes")).toBe(true);
+
+		applier.stop();
+	});
 });

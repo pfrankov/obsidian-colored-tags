@@ -74,6 +74,24 @@ describe("ColoredTagsPlugin tag colors", () => {
 		);
 	});
 
+	it("matches reading view tag links regardless of href casing", () => {
+		const plugin = createPlugin();
+
+		plugin.colorizeTag("Mixed/Case");
+
+		const css = ((plugin as any).cssManager.append as any).mock.calls[0][0];
+		expect(css).toContain('body a.tag[href="#Mixed\\/Case" i]');
+	});
+
+	it("does not leak flat selectors from nested tags to other tags", () => {
+		const plugin = createPlugin();
+
+		plugin.colorizeTag("ok/in/both/modes");
+
+		const css = ((plugin as any).cssManager.append as any).mock.calls[0][0];
+		expect(css).not.toContain(".cm-tag-okinbothmodes.cm-hashtag");
+	});
+
 	it("remaps tag colors to the closest match when palettes change", () => {
 		const plugin = createPlugin();
 		plugin.settings.tagColors = { "#tag/": -1, " other ": 2, "#": 0 };

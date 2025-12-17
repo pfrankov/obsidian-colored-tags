@@ -225,13 +225,13 @@ export default class ColoredTagsPlugin extends Plugin {
 		const tagLower = tagName.toLowerCase().replace(/\//g, "\\/");
 
 		const selectors = [
-			`a.tag[href="${tagHref}"]`,
+			`a.tag[href="${tagHref}" i]`,
 			`a.tag.colored-tag-${tagLower}`,
 			`.cm-s-obsidian .cm-line span.cm-hashtag.colored-tag-${tagLower}`,
 			`.metadata-property[data-property-key="tags" i] .multi-select-pill.colored-tag-${tagLower}`,
 		];
 
-		if (tagFlat) {
+		if (tagFlat && !tagName.includes("/")) {
 			const flatLower = tagFlat.toLowerCase();
 			selectors.push(
 				`.cm-s-obsidian .cm-line span.cm-tag-${flatLower}.cm-hashtag`,

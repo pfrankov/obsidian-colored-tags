@@ -1,7 +1,7 @@
 import { TagApplier, normalizeTagText } from "./TagApplier";
 
 const BASE_TAG_SELECTOR =
-	".bases-table a.tag, .bases-table-container a.tag, .value-list-container a.tag";
+	'.bases-table a.tag, .bases-table-container a.tag, .value-list-container a.tag, a.tag[href^="#"]';
 
 export function getTagNameFromElement(el: HTMLElement): string | null {
 	return normalizeTagText(el.textContent);

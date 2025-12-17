@@ -73,6 +73,26 @@ describe("ColoredClassApplierPlugin", () => {
 		).toBe(false);
 	});
 
+	it("combines multi-part hashtags into a single colored class", () => {
+		const container = document.createElement("div");
+		["#", "Fails", "/In", "/Both"].forEach((text) => {
+			const part = document.createElement("span");
+			part.className = "cm-hashtag";
+			part.innerText = text;
+			container.appendChild(part);
+		});
+
+		applyColoredClasses(container);
+
+		Array.from(container.children).forEach((el) => {
+			expect(
+				(el as HTMLElement).classList.contains(
+					"colored-tag-fails/in/both",
+				),
+			).toBe(true);
+		});
+	});
+
 	it("skips tags that normalize to empty text", () => {
 		const container = document.createElement("div");
 		const hashEl = document.createElement("span");

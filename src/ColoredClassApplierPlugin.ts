@@ -10,24 +10,30 @@ export function applyColoredClasses(domElement: HTMLElement): void {
 		domElement.getElementsByClassName("cm-hashtag"),
 	) as HTMLElement[];
 
-	let currentHashEl: HTMLElement | null = null;
+	let currentTagNodes: HTMLElement[] = [];
 
 	for (const el of nodes) {
 		const text = el.innerText.trim();
 		if (text === "#") {
-			currentHashEl = el;
+			currentTagNodes = [el];
 			continue;
 		}
 
-		if (!currentHashEl) {
+		if (!currentTagNodes.length) {
 			continue;
 		}
 
-		if (!normalizeTagText(text)) {
+		currentTagNodes.push(el);
+
+		const combinedText = currentTagNodes
+			.map((node) => node.innerText)
+			.join("");
+		if (!normalizeTagText(combinedText)) {
+			currentTagNodes = [];
 			continue;
 		}
 
-		applyColoredTagClass([el, currentHashEl], text);
+		applyColoredTagClass(currentTagNodes, combinedText);
 	}
 }
 

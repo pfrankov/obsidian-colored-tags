@@ -21,7 +21,7 @@ describe("I18n", () => {
 	});
 
 	it("falls back to english when locale is not supported", () => {
-		window.localStorage.setItem("language", "fr");
+		window.localStorage.setItem("language", "zz");
 
 		const translated = I18n.t("settings.palette.options.custom");
 
