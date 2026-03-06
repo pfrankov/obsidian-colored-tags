@@ -3,6 +3,14 @@ import ColoredTagsPlugin from "../src/main";
 import { DEFAULT_SETTINGS } from "../src/defaultSettings";
 import { App } from "obsidian";
 
+function createDeferred<T>() {
+	let resolve!: (value: T) => void;
+	const promise = new Promise<T>((res) => {
+		resolve = res;
+	});
+	return { promise, resolve };
+}
+
 const createPlugin = () => {
 	const app = new App();
 	const plugin = new ColoredTagsPlugin(
@@ -135,5 +143,65 @@ describe("ColoredTagsPlugin tag colors", () => {
 		(plugin as any).refreshTagColorMap();
 
 		expect((plugin as any).tagColorMap.get("parent/child")).toBe(3);
+	});
+
+	it("persists known tags only when tag manager reports changes", async () => {
+		const plugin = createPlugin();
+		const saveDataSpy = vi
+			.spyOn(plugin, "saveData")
+			.mockResolvedValue(undefined);
+		(plugin as any).tagManager.updateKnownTags = vi.fn(async () => true);
+		(plugin as any).tagManager.exportKnownTags = vi.fn(() => ({
+			fresh: 1,
+		}));
+
+		await plugin.saveKnownTags();
+
+		expect(plugin.settings.knownTags).toEqual({ fresh: 1 });
+		expect(saveDataSpy).toHaveBeenCalledWith(plugin.settings);
+	});
+
+	it("serializes concurrent known tag saves and flushes one queued rerun", async () => {
+		const plugin = createPlugin();
+		const firstUpdate = createDeferred<boolean>();
+		const updateKnownTags = vi
+			.fn()
+			.mockImplementationOnce(() => firstUpdate.promise)
+			.mockResolvedValueOnce(false);
+		const exportKnownTags = vi.fn(() => ({ fresh: 1 }));
+		const saveDataSpy = vi
+			.spyOn(plugin, "saveData")
+			.mockResolvedValue(undefined);
+
+		(plugin as any).tagManager.updateKnownTags = updateKnownTags;
+		(plugin as any).tagManager.exportKnownTags = exportKnownTags;
+
+		const firstSave = plugin.saveKnownTags();
+		const secondSave = plugin.saveKnownTags();
+
+		expect(updateKnownTags).toHaveBeenCalledTimes(1);
+
+		firstUpdate.resolve(true);
+		await Promise.all([firstSave, secondSave]);
+
+		expect(updateKnownTags).toHaveBeenCalledTimes(2);
+		expect(exportKnownTags).toHaveBeenCalledTimes(1);
+		expect(saveDataSpy).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not drop a rerun queued while a save promise is settling", async () => {
+		const plugin = createPlugin();
+		const updateKnownTags = vi.fn(async () => false);
+
+		(plugin as any).tagManager.updateKnownTags = updateKnownTags;
+
+		const firstSave = plugin.saveKnownTags();
+		const secondSave = new Promise<Promise<void>>((resolve) => {
+			queueMicrotask(() => resolve(plugin.saveKnownTags()));
+		});
+
+		await Promise.all([firstSave, await secondSave]);
+
+		expect(updateKnownTags).toHaveBeenCalledTimes(2);
 	});
 });

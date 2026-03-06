@@ -31,6 +31,8 @@ export default class ColoredTagsPlugin extends Plugin {
 	private colorService!: ColorService;
 	private cssManager!: CSSManager;
 	private tagManager!: TagManager;
+	private saveKnownTagsPromise: Promise<void> | null = null;
+	private saveKnownTagsQueued = false;
 
 	async onload() {
 		await this.loadSettings();
@@ -80,11 +82,33 @@ export default class ColoredTagsPlugin extends Plugin {
 	}
 
 	async saveKnownTags() {
-		const hasChanges = await this.tagManager.updateKnownTags(
-			this.app.metadataCache,
-		);
+		this.saveKnownTagsQueued = true;
 
-		if (hasChanges) {
+		if (this.saveKnownTagsPromise) {
+			await this.saveKnownTagsPromise;
+			if (this.saveKnownTagsQueued) {
+				await this.saveKnownTags();
+			}
+			return;
+		}
+
+		this.saveKnownTagsPromise = this.flushKnownTagsUpdates().finally(() => {
+			this.saveKnownTagsPromise = null;
+		});
+		await this.saveKnownTagsPromise;
+	}
+
+	private async flushKnownTagsUpdates(): Promise<void> {
+		while (this.saveKnownTagsQueued) {
+			this.saveKnownTagsQueued = false;
+			const hasChanges = await this.tagManager.updateKnownTags(
+				this.app.metadataCache,
+			);
+
+			if (!hasChanges) {
+				continue;
+			}
+
 			this.settings.knownTags = this.tagManager.exportKnownTags();
 			await this.saveData(this.settings);
 		}

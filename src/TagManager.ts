@@ -13,15 +13,13 @@ export class TagManager {
 	private renderedTags = new Set<string>();
 
 	constructor(knownTags: Record<string, number>) {
-		const normalized = Object.entries(knownTags || {}).reduce<
-			Array<[string, number]>
-		>((acc, [tagName, order]) => {
+		const normalized: Array<[string, number]> = [];
+		for (const [tagName, order] of Object.entries(knownTags || {})) {
 			const normalizedName = normalizeTagName(tagName);
 			if (normalizedName) {
-				acc.push([normalizedName, order]);
+				normalized.push([normalizedName, order]);
 			}
-			return acc;
-		}, []);
+		}
 		this.tagsMap = new Map(normalized);
 	}
 
@@ -55,17 +53,19 @@ export class TagManager {
 
 	private collectTagPaths(metadataCache: MetadataCache): string[] {
 		const paths = new Set<string>();
-		Object.keys(metadataCache.getTags())
-			.map((tag) => normalizeTagName(tag))
-			.filter((tag) => tag.length > 0 && !tag.match(/\/$/))
-			.forEach((tag) => {
-				const chunks = tag.split("/");
-				let combined = "";
-				for (const chunk of chunks) {
-					combined = combined ? `${combined}/${chunk}` : chunk;
-					paths.add(combined);
-				}
-			});
+		for (const rawTag of Object.keys(metadataCache.getTags())) {
+			const tag = normalizeTagName(rawTag);
+			if (!tag) {
+				continue;
+			}
+
+			const chunks = tag.split("/");
+			let combined = "";
+			for (const chunk of chunks) {
+				combined = combined ? `${combined}/${chunk}` : chunk;
+				paths.add(combined);
+			}
+		}
 
 		return Array.from(paths).sort((a, b) => {
 			const depthDiff = a.split("/").length - b.split("/").length;
@@ -78,9 +78,20 @@ export class TagManager {
 		const parentMaxOrder = new Map<string, number>();
 
 		for (const tag of tags) {
-			const parentIndex = tag.lastIndexOf("/");
-			const parentKey =
-				parentIndex === -1 ? "" : tag.slice(0, parentIndex);
+			const previousOrder = this.tagsMap.get(tag);
+			if (previousOrder === undefined) {
+				continue;
+			}
+
+			const parentKey = this.getParentKey(tag);
+			parentMaxOrder.set(
+				parentKey,
+				Math.max(parentMaxOrder.get(parentKey) ?? 0, previousOrder),
+			);
+		}
+
+		for (const tag of tags) {
+			const parentKey = this.getParentKey(tag);
 			const previousOrder = this.tagsMap.get(tag);
 			const order =
 				previousOrder ?? (parentMaxOrder.get(parentKey) ?? 0) + 1;
@@ -93,6 +104,11 @@ export class TagManager {
 		}
 
 		return nextMap;
+	}
+
+	private getParentKey(tag: string): string {
+		const parentIndex = tag.lastIndexOf("/");
+		return parentIndex === -1 ? "" : tag.slice(0, parentIndex);
 	}
 
 	private hasChanged(nextMap: Map<string, number>): boolean {
