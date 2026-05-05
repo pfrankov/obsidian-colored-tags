@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "npm run typecheck && node esbuild.config.mjs production",
+		"cli-build": "node openclaw-colored-tags-cli.cjs help > /dev/null",
 		"typecheck": "tsc --noEmit",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"format": "prettier 'src/**/*' 'tests/**/*' --write",
@@ -15,6 +16,9 @@
 		"test:coverage": "cross-env VITE_CJS_IGNORE_WARNING=1 vitest run --coverage && node ./scripts/check-coverage.js",
 		"lint": "eslint src --max-warnings=0",
 		"check": "npm run lint && npm run typecheck && npm run test:coverage"
+	},
+	"bin": {
+		"colored-tags-cli": "./openclaw-colored-tags-cli.cjs"
 	},
 	"keywords": [
 		"obsidian",
