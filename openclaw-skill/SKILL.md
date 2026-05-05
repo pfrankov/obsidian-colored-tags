@@ -5,22 +5,22 @@ description: Use this skill when an OpenClaw agent needs to list, set, or remove
 
 # Obsidian Colored Tags CLI
 
-Use this repo's CLI to update Colored Tags settings. Always pass `--vault <vault>`.
+Use the CLI shipped in the installed plugin folder. Always pass `--vault <vault>`.
 
 ```bash
-PLUGIN_REPO=/path/to/obsidian-colored-tags
-npm --prefix "$PLUGIN_REPO" run cli-build
-node "$PLUGIN_REPO/openclaw-colored-tags-cli.cjs" list --vault <vault>
+VAULT=/path/to/vault
+CLI="$VAULT/.obsidian/plugins/colored-tags/openclaw-colored-tags-cli.cjs"
+node "$CLI" list --vault "$VAULT"
 ```
 
 Set or remove a tag color:
 
 ```bash
-node "$PLUGIN_REPO/openclaw-colored-tags-cli.cjs" set --vault <vault> --tag research --color "#4488ff"
-node "$PLUGIN_REPO/openclaw-colored-tags-cli.cjs" remove --vault <vault> --tag research
+node "$CLI" set --vault "$VAULT" --tag research --color "#4488ff"
+node "$CLI" remove --vault "$VAULT" --tag research
 ```
 
-If installed or linked, `colored-tags-cli ...` may be used instead. Tags may be passed with or without `#`.
+If the installed plugin does not include the CLI yet, use `colored-tags-cli` from `PATH` or `node "$PLUGIN_REPO/openclaw-colored-tags-cli.cjs"` from a checkout. Tags may be passed with or without `#`.
 
 ## Safety
 

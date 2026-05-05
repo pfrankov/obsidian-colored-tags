@@ -6,7 +6,8 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "npm run typecheck && node esbuild.config.mjs production",
-		"cli-build": "node openclaw-colored-tags-cli.cjs help > /dev/null",
+		"postbuild": "npm run cli-build",
+		"cli-build": "mkdir -p dist && cp openclaw-colored-tags-cli.cjs openclaw-plugin-cli.cjs dist/ && node openclaw-colored-tags-cli.cjs help > /dev/null",
 		"typecheck": "tsc --noEmit",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"format": "prettier 'src/**/*' 'tests/**/*' --write",
