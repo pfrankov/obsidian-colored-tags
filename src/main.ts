@@ -253,6 +253,7 @@ export default class ColoredTagsPlugin extends Plugin {
 			`a.tag.colored-tag-${tagLower}`,
 			`.cm-s-obsidian .cm-line span.cm-hashtag.colored-tag-${tagLower}`,
 			`.metadata-property[data-property-key="tags" i] .multi-select-pill.colored-tag-${tagLower}`,
+			`.bases-metadata-value[data-property-type="tags" i] .multi-select-pill.colored-tag-${tagLower}`,
 		];
 
 		if (tagFlat && !tagName.includes("/")) {
@@ -271,6 +272,7 @@ export default class ColoredTagsPlugin extends Plugin {
 		return tagLower
 			? [
 					`.metadata-property[data-property-key="tags" i] .multi-select-pill-remove-button.colored-tag-${tagLower}`,
+					`.bases-metadata-value[data-property-type="tags" i] .multi-select-pill-remove-button.colored-tag-${tagLower}`,
 				]
 			: [];
 	}

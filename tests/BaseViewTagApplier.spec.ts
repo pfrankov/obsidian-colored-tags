@@ -5,6 +5,37 @@ import {
 	getTagNameFromElement,
 } from "../src/tag-appliers/BaseViewTagApplier";
 
+function createBasesTagsCell(...values: string[]): HTMLElement {
+	const cell = document.createElement("div");
+	cell.className =
+		"bases-table-cell bases-metadata-value metadata-property-value";
+	cell.setAttribute("data-property-type", "tags");
+
+	const container = document.createElement("div");
+	container.className = "multi-select-container";
+
+	for (const value of values) {
+		const pill = document.createElement("div");
+		pill.className = "multi-select-pill";
+
+		const content = document.createElement("div");
+		content.className = "multi-select-pill-content";
+		const span = document.createElement("span");
+		span.textContent = value;
+		content.appendChild(span);
+		pill.appendChild(content);
+
+		const remove = document.createElement("div");
+		remove.className = "multi-select-pill-remove-button";
+		pill.appendChild(remove);
+
+		container.appendChild(pill);
+	}
+
+	cell.appendChild(container);
+	return cell;
+}
+
 describe("getTagNameFromElement", () => {
 	it("normalizes tag text and strips hash", () => {
 		const el = document.createElement("a");
@@ -18,6 +49,13 @@ describe("getTagNameFromElement", () => {
 		el.textContent = "   ";
 
 		expect(getTagNameFromElement(el)).toBeNull();
+	});
+
+	it("reads the pill content for multi-select pills", () => {
+		const cell = createBasesTagsCell("First");
+		const pill = cell.querySelector<HTMLElement>(".multi-select-pill")!;
+
+		expect(getTagNameFromElement(pill)).toBe("first");
 	});
 });
 
@@ -97,6 +135,40 @@ describe("BaseViewTagApplier", () => {
 		expect(tag.classList.contains("colored-tag-instant")).toBe(true);
 
 		applier.stop();
+	});
+
+	it("colors multi-select pills inside a bases tags cell", () => {
+		const root = document.createElement("div");
+		const cell = createBasesTagsCell("First", "Second");
+		root.appendChild(cell);
+
+		applyBaseTagClasses(root);
+
+		const pills = cell.querySelectorAll<HTMLElement>(".multi-select-pill");
+		expect(pills[0].classList.contains("colored-tag-first")).toBe(true);
+		expect(pills[1].classList.contains("colored-tag-second")).toBe(true);
+
+		const removeButtons = cell.querySelectorAll<HTMLElement>(
+			".multi-select-pill-remove-button",
+		);
+		expect(removeButtons[0].classList.contains("colored-tag-first")).toBe(
+			true,
+		);
+		expect(removeButtons[1].classList.contains("colored-tag-second")).toBe(
+			true,
+		);
+	});
+
+	it("ignores multi-select pills outside a tags cell", () => {
+		const root = document.createElement("div");
+		const cell = createBasesTagsCell("First");
+		cell.setAttribute("data-property-type", "text");
+		root.appendChild(cell);
+
+		applyBaseTagClasses(root);
+
+		const pill = cell.querySelector<HTMLElement>(".multi-select-pill")!;
+		expect(pill.className.includes("colored-tag")).toBe(false);
 	});
 
 	it("adds classes to regular markdown tag links", () => {
