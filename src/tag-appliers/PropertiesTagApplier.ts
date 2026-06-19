@@ -1,26 +1,16 @@
-import { TagApplier, normalizeTagText } from "./TagApplier";
+import { TagApplier } from "./TagApplier";
+import {
+	getMultiSelectPillName,
+	getMultiSelectPillTargets,
+} from "./multiSelectPill";
 
 const PROPERTY_TAG_SELECTOR =
 	'.metadata-property[data-property-key="tags" i] .multi-select-pill';
 
-const getPropertyTagTargets = (pillEl: HTMLElement): HTMLElement[] => {
-	const removeButton = pillEl.querySelector<HTMLElement>(
-		".multi-select-pill-remove-button",
-	);
-	return removeButton ? [pillEl, removeButton] : [pillEl];
-};
-
-const getPropertyTagName = (pillEl: HTMLElement): string | null => {
-	const content = pillEl.querySelector<HTMLElement>(
-		".multi-select-pill-content",
-	);
-	return normalizeTagText(content?.textContent ?? pillEl.textContent);
-};
-
 const singleUseApplier = new TagApplier({
 	selector: PROPERTY_TAG_SELECTOR,
-	getTagText: getPropertyTagName,
-	getTagTargets: getPropertyTagTargets,
+	getTagText: getMultiSelectPillName,
+	getTagTargets: getMultiSelectPillTargets,
 });
 
 export function applyPropertiesTagClasses(
@@ -35,8 +25,8 @@ export class PropertiesTagApplier {
 	constructor() {
 		this.applier = new TagApplier({
 			selector: PROPERTY_TAG_SELECTOR,
-			getTagText: getPropertyTagName,
-			getTagTargets: getPropertyTagTargets,
+			getTagText: getMultiSelectPillName,
+			getTagTargets: getMultiSelectPillTargets,
 		});
 	}
 
