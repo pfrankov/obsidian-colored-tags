@@ -234,3 +234,17 @@
 	color: var(--text-faint);
 	font-style: italic;
 }
+
+.colored-tags-settings .colored-tags-custom-palette-input {
+	min-width: 100%;
+}
+
+.colored-tags-settings .colored-tags-declarative-host {
+	display: block;
+	padding: 0;
+	border: 0;
+}
+
+.colored-tags-settings .colored-tags-declarative-content {
+	width: 100%;
+}

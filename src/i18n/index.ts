@@ -1,3 +1,4 @@
+import { getLanguage } from "obsidian";
 import de from "./de.json";
 import en from "./en.json";
 import es from "./es.json";
@@ -27,7 +28,7 @@ const locales: Record<string, TranslationTree> = {
 
 export class I18n {
 	static t(key: string, params?: { [key: string]: string }): string {
-		const locale = window.localStorage.getItem("language") || "en";
+		const locale = getLanguage();
 		const keys = key.split(".");
 
 		let translations: TranslationTree | string =
@@ -39,12 +40,12 @@ export class I18n {
 				translations = locales["en"];
 				return this.extractEnglishValue(keys, key);
 			}
-			if ((translations as TranslationTree)[k] === undefined) {
+			if (translations[k] === undefined) {
 				logger.warn(`Translation missing: ${key}`);
 				translations = locales["en"];
 				return this.extractEnglishValue(keys, key);
 			}
-			translations = (translations as TranslationTree)[k];
+			translations = translations[k];
 		}
 
 		if (typeof translations !== "string") {

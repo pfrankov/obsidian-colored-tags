@@ -135,12 +135,17 @@ export class PluginSettingTab {
 		};
 	}
 
-	display(): void {
+	hide(): void {
 		// Implement in child class
 	}
 
-	hide(): void {
-		// Implement in child class
+	update(): void {
+		this.containerEl.empty();
+		const definitions = (this as any).getSettingDefinitions?.() ?? [];
+		for (const definition of definitions) {
+			const setting = new Setting(this.containerEl);
+			definition.render?.(setting, undefined);
+		}
 	}
 }
 
@@ -491,6 +496,11 @@ export class Modal {
 		div.className = o;
 	} else if (o?.cls) {
 		div.className = o.cls;
+	}
+	if (o?.attr) {
+		Object.entries(o.attr).forEach(([key, value]) =>
+			div.setAttribute(key, String(value)),
+		);
 	}
 	this.appendChild(div as unknown as Node);
 	if (typeof callback === "function") callback(div);

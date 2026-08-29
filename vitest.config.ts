@@ -9,7 +9,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       reportsDirectory: 'coverage',
-      exclude: ['tests/**', 'src/main.ts', 'copy-files-plugin.mjs', 'esbuild.config.mjs', 'version-bump.mjs', 'versions.json', 'manifest.json', 'scripts/check-coverage.js'],
+      exclude: ['tests/**', 'src/main.ts', 'copy-files-plugin.mjs', 'esbuild.config.mjs', 'eslint.obsidian.config.mjs', 'version-bump.mjs', 'versions.json', 'manifest.json', 'scripts/check-coverage.js'],
       thresholds: {
         global: {
           statements: 100,

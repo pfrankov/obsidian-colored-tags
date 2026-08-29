@@ -1,11 +1,12 @@
 import { afterEach, vi } from "vitest";
+import { getLanguage } from "obsidian";
 import { I18n } from "../src/i18n";
 import { logger } from "../src/logger";
 import en from "../src/i18n/en.json";
 
 describe("I18n", () => {
 	beforeEach(() => {
-		window.localStorage.clear();
+		vi.mocked(getLanguage).mockReturnValue("en");
 	});
 
 	afterEach(() => {
@@ -13,7 +14,7 @@ describe("I18n", () => {
 	});
 
 	it("returns translations for the active locale", () => {
-		window.localStorage.setItem("language", "de");
+		vi.mocked(getLanguage).mockReturnValue("de");
 
 		const translated = I18n.t("settings.palette.options.custom");
 
@@ -21,7 +22,7 @@ describe("I18n", () => {
 	});
 
 	it("falls back to english when locale is not supported", () => {
-		window.localStorage.setItem("language", "zz");
+		vi.mocked(getLanguage).mockReturnValue("zz");
 
 		const translated = I18n.t("settings.palette.options.custom");
 
@@ -29,8 +30,6 @@ describe("I18n", () => {
 	});
 
 	it("supports interpolation params", () => {
-		window.localStorage.setItem("language", "en");
-
 		const translated = I18n.t("notices.updateAvailable", {
 			pluginName: "Colored Tags",
 		});
@@ -39,7 +38,6 @@ describe("I18n", () => {
 	});
 
 	it("replaces all occurrences of the same placeholder", () => {
-		window.localStorage.setItem("language", "en");
 		(en as any).__multi = "{{name}} says hi to {{name}}";
 
 		try {
@@ -51,7 +49,7 @@ describe("I18n", () => {
 	});
 
 	it("falls back to english value when locale translation is missing", () => {
-		window.localStorage.setItem("language", "zh");
+		vi.mocked(getLanguage).mockReturnValue("zh");
 		const warnSpy = vi
 			.spyOn(logger, "warn")
 			.mockImplementation(() => undefined);
@@ -70,7 +68,6 @@ describe("I18n", () => {
 	});
 
 	it("returns the key when even english translation path is invalid", () => {
-		window.localStorage.setItem("language", "en");
 		const warnSpy = vi
 			.spyOn(logger, "warn")
 			.mockImplementation(() => undefined);
@@ -84,15 +81,12 @@ describe("I18n", () => {
 	});
 
 	it("returns the key when translation resolves to a subtree", () => {
-		window.localStorage.setItem("language", "en");
-
 		const translated = I18n.t("settings.palette");
 
 		expect(translated).toBe("settings.palette");
 	});
 
 	it("falls back to key when english subtree misses a child", () => {
-		window.localStorage.setItem("language", "en");
 		const warnSpy = vi
 			.spyOn(logger, "warn")
 			.mockImplementation(() => undefined);

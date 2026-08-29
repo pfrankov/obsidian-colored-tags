@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import ColoredTagsPlugin from "../src/main";
 import { DEFAULT_SETTINGS } from "../src/defaultSettings";
-import { App } from "obsidian";
+import { App, requestUrl } from "obsidian";
 
 function createDeferred<T>() {
 	let resolve!: (value: T) => void;
@@ -203,5 +203,46 @@ describe("ColoredTagsPlugin tag colors", () => {
 		await Promise.all([firstSave, await secondSave]);
 
 		expect(updateKnownTags).toHaveBeenCalledTimes(2);
+	});
+});
+
+
+describe("ColoredTagsPlugin settings and update compatibility", () => {
+	it("keeps legacy migration semantics and unknown fields", () => {
+		const plugin = createPlugin();
+		const legacy = {
+			_version: 2, seed: 3, chroma: 17, lightness: 10,
+			tagColors: { legacy: 2 }, unknownFutureField: "keep-me",
+		};
+		const migrated = (plugin as any).migrateSettings(legacy);
+		expect(migrated._version).toBe(4);
+		expect(migrated.palette.seed).toBe(3);
+		expect(migrated.palette.selected).toBe("adaptive-bright");
+		expect(migrated.tagColors).toEqual({ legacy: 2 });
+		expect((migrated as any).unknownFutureField).toBe("keep-me");
+	});
+
+	it("preserves seed fallback behavior during migration", () => {
+		const plugin = createPlugin();
+		const migrated = (plugin as any).migrateSettings({
+			_version: 2, seed: 0, chroma: 0, lightness: 0,
+		});
+		expect(migrated.palette.seed).toBe(0);
+	});
+
+	it("keeps update check request behavior with a typed response", async () => {
+		const plugin = createPlugin();
+		vi.mocked(requestUrl).mockResolvedValueOnce({
+			status: 200,
+			headers: {},
+			arrayBuffer: new ArrayBuffer(0),
+			json: { tag_name: "1.0.0" },
+			text: "",
+		});
+		await plugin.checkUpdates();
+		expect(requestUrl).toHaveBeenCalledWith(expect.objectContaining({
+			url: "https://api.github.com/repos/pfrankov/obsidian-colored-tags/releases/latest",
+			method: "GET",
+		}));
 	});
 });
