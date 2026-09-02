@@ -4,7 +4,10 @@ import { vi } from "vitest";
 vi.mock("obsidian", async () => {
 	// Import the manual mock file. Vitest supports returning a promise.
 	const module = await import("./__mocks__/obsidian");
-	return module;
+	return {
+		...module,
+		getLanguage: vi.fn(() => "en"),
+	};
 });
 
 // Polyfill `matchMedia` for jsdom environment (Vitest uses jsdom),
@@ -102,5 +105,12 @@ if (!(HTMLElement.prototype as any).addClass) {
 if (!(HTMLElement.prototype as any).appendText) {
 	(HTMLElement.prototype as any).appendText = function (text: string) {
 		this.textContent = (this.textContent || "") + String(text);
+	};
+}
+
+// Obsidian patches Node with a cross-window-safe instanceof helper.
+if (!(Node.prototype as any).instanceOf) {
+	(Node.prototype as any).instanceOf = function (type: new () => unknown) {
+		return this instanceof type;
 	};
 }

@@ -1,0 +1,52 @@
+name: Obsidian directory review
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "manifest.json"
+      - "package.json"
+      - "package-lock.json"
+      - "vitest.config.ts"
+      - "eslint.obsidian.config.mjs"
+      - ".github/workflows/obsidian-review.yml"
+      - "esbuild.config.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Run project checks
+        run: npm run check
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Install official Obsidian review tooling
+        run: >-
+          npm install --no-save --package-lock=false --legacy-peer-deps
+          eslint@9.39.1
+          eslint-plugin-obsidianmd@0.4.2
+          typescript-eslint@8.35.1
+          @typescript-eslint/parser@8.35.1
+
+      - name: Run official Obsidian rules
+        continue-on-error: true
+        run: npx eslint "src/**/*.ts" package.json --config eslint.obsidian.config.mjs

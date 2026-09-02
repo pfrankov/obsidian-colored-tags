@@ -59,6 +59,10 @@ const findSetting = (container: HTMLElement, text: string) =>
 			s.querySelector(".setting-item-name")?.textContent?.includes(text),
 	) as HTMLElement | undefined;
 
+const renderSettingsTab = (tab: ColoredTagsPluginSettingTab) => {
+	tab.update();
+};
+
 describe("ColoredTagsPluginSettingTab", () => {
 	describe("rendering", () => {
 		it("renders palette with correct number of color elements", () => {
@@ -143,7 +147,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 				},
 			});
 
-			tab.display();
+			renderSettingsTab(tab);
 
 			expect(
 				tab.containerEl.querySelector(
@@ -172,11 +176,70 @@ describe("ColoredTagsPluginSettingTab", () => {
 		});
 	});
 
+		it("renders custom palette description markup without innerHTML", () => {
+			const { tab } = createTab({
+				settings: {
+					palette: {
+						selected: ColoredTagsPaletteType.CUSTOM,
+						custom: "ff0000-00ff00",
+						seed: 0,
+					},
+				},
+			});
+			renderSettingsTab(tab);
+			const code = tab.containerEl.querySelector(".setting-item-description code");
+			expect(code).toBeTruthy();
+			expect(code?.textContent).toBe("XXXXXX-XXXXXX-XXXXXX");
+		});
+
+		it("falls back to plain text when code markup is absent", () => {
+			const { tab } = createTab();
+			const container = document.createElement("div");
+			(tab as any).renderCodeDescription(container, "plain description");
+			expect(container.textContent).toBe("plain description");
+			expect(container.querySelector("code")).toBeNull();
+		});
+
+		it("renders community discussion as the same external link", async () => {
+			vi.spyOn(CommunityPalettesService, "getCommunityPalettes").mockResolvedValue([]);
+			const { tab } = createTab({
+				settings: {
+					palette: {
+						selected: ColoredTagsPaletteType.CUSTOM,
+						custom: "ff0000-00ff00",
+						seed: 0,
+					},
+				},
+			});
+			renderSettingsTab(tab);
+			await tick();
+			const link = tab.containerEl.querySelector<HTMLAnchorElement>(
+				'.community-palettes__description a[href="https://github.com/pfrankov/obsidian-colored-tags/discussions/18"]',
+			);
+			expect(link).toBeTruthy();
+			expect(link?.target).toBe("_blank");
+		});
+
+		it("falls back to plain text when community link tokens are absent", () => {
+			const { tab } = createTab();
+			const container = document.createElement("div");
+			const original = I18n.t;
+			vi.spyOn(I18n, "t").mockImplementation((key: string, params?: Record<string, string>) =>
+				key === "settings.palette.custom.community.description"
+					? "plain community description"
+					: original.call(I18n, key, params),
+			);
+			(tab as any).renderCommunityDescription(container);
+			expect(container.textContent).toBe("plain community description");
+			expect(container.querySelector("a")).toBeNull();
+			vi.restoreAllMocks();
+		});
+
 	describe("settings interactions", () => {
 		it("toggles accessibility section and reveals High text contrast setting", async () => {
 			const { tab } = createTab();
 			tab.showAccessibility = false;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const accessibilitySetting = findSetting(
 				tab.containerEl,
@@ -198,7 +261,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 		it("toggles experimental section and reveals experimental controls", async () => {
 			const { tab } = createTab();
 			tab.showExperimental = false;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const experimentalSetting = findSetting(
 				tab.containerEl,
@@ -289,7 +352,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 			const saveSettings = vi.fn(async () => {});
 			const { tab, plugin } = createTab({ saveSettings });
 			tab.showAccessibility = true;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const setting = findSetting(tab.containerEl, "High text contrast");
 			const checkbox = setting?.querySelector(
@@ -310,7 +373,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 				saveSettings,
 			});
 			tab.showExperimental = true;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const mixSetting = findSetting(tab.containerEl, "Mix colors");
 			const mixToggle = mixSetting?.querySelector(
@@ -343,7 +406,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 			const saveSettings = vi.fn(async () => {});
 			const { tab, plugin } = createTab({ saveSettings });
 			tab.showExperimental = true;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const input = tab.containerEl.querySelector(
 				".tag-color-setting__input input",
@@ -371,7 +434,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 			const saveSettings = vi.fn(async () => {});
 			const { tab } = createTab({ saveSettings });
 			tab.showExperimental = true;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const swatch = tab.containerEl.querySelector(
 				".tag-color-setting__swatch",
@@ -390,7 +453,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 				settings: { tagColors: undefined as any },
 			});
 			tab.showExperimental = true;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const emptyState = tab.containerEl.querySelector(
 				".tag-color-setting__empty",
@@ -406,7 +469,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 				settings: { tagColors: { a: 0 } },
 			});
 			tab.showExperimental = true;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const removeBtn = tab.containerEl.querySelector(
 				".tag-color-setting__chip-remove",
@@ -434,7 +497,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 				"renderTagColorAssignments",
 			);
 
-			tab.display();
+			renderSettingsTab(tab);
 			renderPaletteSpy.mockClear();
 			renderAssignmentsSpy.mockClear();
 
@@ -449,7 +512,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 				settings: { tagColors: { sample: 0 } },
 			});
 			tab.showExperimental = true;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const chip = tab.containerEl.querySelector(
 				".tag-color-setting__chip a.tag",
@@ -472,7 +535,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 			});
 			const { tab } = createTab({}, app);
 			tab.showExperimental = true;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const options = Array.from(
 				tab.containerEl.querySelectorAll("datalist option"),
@@ -532,7 +595,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 				saveSettings,
 			});
 			tab.showExperimental = true;
-			tab.display();
+			renderSettingsTab(tab);
 
 			const resetSetting = findSetting(tab.containerEl, "Reset config");
 			const resetButton = resetSetting?.querySelector(
@@ -572,7 +635,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 				},
 			});
 			tab.renderPalette = vi.fn();
-			tab.display();
+			renderSettingsTab(tab);
 			await tick();
 
 			const cards = tab.containerEl.querySelectorAll(
@@ -624,7 +687,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 				},
 			});
 			tab.renderPalette = vi.fn();
-			tab.display();
+			renderSettingsTab(tab);
 			await tick();
 
 			const card = tab.containerEl.querySelector(
@@ -675,7 +738,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 					},
 				},
 			});
-			tab.display();
+			renderSettingsTab(tab);
 			await tick();
 
 			const card = tab.containerEl.querySelector(
@@ -732,7 +795,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 					},
 				},
 			});
-			tab.display();
+			renderSettingsTab(tab);
 			await tick();
 
 			const cards = Array.from(
@@ -774,7 +837,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 					},
 				},
 			});
-			tab.display();
+			renderSettingsTab(tab);
 			await tick();
 
 			const statusEl = tab.containerEl.querySelector(
@@ -802,7 +865,7 @@ describe("ColoredTagsPluginSettingTab", () => {
 					},
 				},
 			});
-			tab.display();
+			renderSettingsTab(tab);
 			await tick();
 
 			const statusEl = tab.containerEl.querySelector(

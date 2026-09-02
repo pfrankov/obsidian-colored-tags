@@ -5,7 +5,4 @@ export const logger = {
 	error: (message: string) => {
 		console.error(message);
 	},
-	log: (message: string) => {
-		console.log(message);
-	},
 };

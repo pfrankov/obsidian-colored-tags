@@ -65,8 +65,9 @@ export function applyColoredTagClassesInRoot(
 ): void {
 	const candidates: HTMLElement[] = [];
 
-	if (root instanceof HTMLElement && root.matches(selector)) {
-		candidates.push(root);
+	const rootNode = root as Node;
+	if (rootNode.instanceOf(HTMLElement) && rootNode.matches(selector)) {
+		candidates.push(rootNode);
 	}
 
 	root.querySelectorAll<HTMLElement>(selector).forEach((el) => {
@@ -140,8 +141,8 @@ export class TagApplier {
 
 		mutation.addedNodes.forEach((node) => {
 			if (
-				node instanceof HTMLElement ||
-				node instanceof DocumentFragment
+				node.instanceOf(HTMLElement) ||
+				node.instanceOf(DocumentFragment)
 			) {
 				this.scheduleApply(node);
 			}

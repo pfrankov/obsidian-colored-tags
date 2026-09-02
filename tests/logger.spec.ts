@@ -26,13 +26,4 @@ describe("logger", () => {
 		expect(spy).toHaveBeenCalledWith("error-message");
 	});
 
-	it("delegates log to console.log", () => {
-		const spy = vi
-			.spyOn(console, "log")
-			.mockImplementation(() => undefined);
-
-		logger.log("log-message");
-
-		expect(spy).toHaveBeenCalledWith("log-message");
-	});
 });

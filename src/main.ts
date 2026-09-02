@@ -14,6 +14,20 @@ import { I18n } from "./i18n";
 import { normalizePaletteIndex, normalizeTagName } from "./tagUtils";
 import { PropertiesTagApplier } from "./tag-appliers/PropertiesTagApplier";
 
+type ReleaseResponse = {
+	tag_name: string;
+};
+
+type LegacySettingsData = {
+	_version: number;
+	palette: number | ColoredTagsPluginSettings["palette"];
+	seed?: number;
+	chroma?: number;
+	lightness?: number;
+	tagColors?: Record<string, number>;
+	[key: string]: unknown;
+};
+
 export default class ColoredTagsPlugin extends Plugin {
 	private static readonly INITIAL_UPDATE_CHECK_DELAY = 5000; // 5 seconds
 	private static readonly EDITOR_CHANGE_DEBOUNCE = 3000; // 3 seconds
@@ -45,7 +59,7 @@ export default class ColoredTagsPlugin extends Plugin {
 			this.reload();
 
 			window.setTimeout(() => {
-				this.checkUpdates();
+				void this.checkUpdates();
 			}, ColoredTagsPlugin.INITIAL_UPDATE_CHECK_DELAY);
 
 			this.registerEvent(
@@ -126,14 +140,16 @@ export default class ColoredTagsPlugin extends Plugin {
 
 	async checkUpdates() {
 		try {
-			const { json: response } = await requestUrl({
-				url: "https://api.github.com/repos/pfrankov/obsidian-colored-tags/releases/latest",
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				contentType: "application/json",
-			});
+			const response = (
+				await requestUrl({
+					url: "https://api.github.com/repos/pfrankov/obsidian-colored-tags/releases/latest",
+					method: "GET",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					contentType: "application/json",
+				})
+			).json as ReleaseResponse;
 
 			if (response.tag_name !== this.manifest.version) {
 				const pluginName = this.manifest?.name ?? "Colored Tags";
@@ -278,13 +294,14 @@ export default class ColoredTagsPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		const loadedData = await this.loadData();
+		const loadedData = (await this.loadData()) as LegacySettingsData | null;
 		this.settings = this.migrateSettings(loadedData);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	private migrateSettings(loadedData: any): ColoredTagsPluginSettings {
-		const data = loadedData ? { ...loadedData } : {};
+	private migrateSettings(
+		loadedData: LegacySettingsData | null,
+	): ColoredTagsPluginSettings {
+		const data = (loadedData ? { ...loadedData } : {}) as LegacySettingsData;
 		let currentVersion = data._version ?? 0;
 		let needToSave = false;
 
@@ -306,7 +323,7 @@ export default class ColoredTagsPlugin extends Plugin {
 				...DEFAULT_SETTINGS.palette,
 				seed: data.seed || 0,
 			};
-			if (data.chroma > 16 || data.lightness > 87) {
+			if ((data.chroma as number) > 16 || (data.lightness as number) > 87) {
 				data.palette.selected = ColoredTagsPaletteType.ADAPTIVE_BRIGHT;
 			}
 			delete data.chroma;
@@ -318,9 +335,9 @@ export default class ColoredTagsPlugin extends Plugin {
 			data.tagColors = data.tagColors || {};
 		});
 
-		const settings = Object.assign({}, DEFAULT_SETTINGS, data);
+		const settings = Object.assign({}, DEFAULT_SETTINGS, data) as ColoredTagsPluginSettings;
 		if (needToSave) {
-			this.saveData(settings);
+			void this.saveData(settings);
 		}
 		return settings;
 	}

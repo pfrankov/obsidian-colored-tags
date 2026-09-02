@@ -17,6 +17,12 @@ import {
 
 const SELECTED_CLASS = "is-selected";
 
+const PALETTE_HEADING_KEY = "settings.palette.heading";
+
+type SliderWithLegacyTooltip = {
+	showTooltip(): void;
+};
+
 export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 	plugin: ColoredTagsPlugin;
 	showExperimental = false;
@@ -24,10 +30,95 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 	private communityPaletteDescriptionCounter = 0;
 	private communityPaletteCards: Map<string, HTMLElement> = new Map();
 	private paletteChangeSubscribers: Array<() => void> = [];
+	private declarativePaletteEl: HTMLElement | null = null;
 
 	constructor(app: App, plugin: ColoredTagsPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
+	}
+
+
+	/**
+	 * Obsidian 1.13+ settings-search definitions.
+	 * Render callbacks reuse the existing section renderers while the settings
+	 * framework owns lifecycle, search, and refresh behavior.
+	 */
+	getSettingDefinitions() {
+		return [
+			{
+				name: I18n.t(PALETTE_HEADING_KEY),
+				searchable: false,
+				render: (setting: Setting) => {
+					this.paletteChangeSubscribers = [];
+					const host = this.prepareDeclarativeHost(setting);
+					this.renderTags(host);
+					const paletteEl = host.createDiv({ cls: "palette" });
+					this.renderPalette(paletteEl);
+					this.declarativePaletteEl = paletteEl;
+					return () => {
+						this.declarativePaletteEl = null;
+					};
+				},
+			},
+			{
+				name: I18n.t(PALETTE_HEADING_KEY),
+				desc: I18n.t("settings.palette.description"),
+				aliases: [
+					I18n.t("settings.palette.custom.name"),
+					I18n.t("settings.palette.shift.name"),
+					I18n.t("settings.palette.custom.community.heading"),
+				],
+				render: (setting: Setting) => {
+					const host = this.prepareDeclarativeHost(setting);
+					const paletteEl =
+						this.declarativePaletteEl ?? this.createDeclarativePalette(host);
+					this.renderPaletteSettings(host, paletteEl);
+				},
+			},
+			{
+				name: I18n.t("settings.accessibility.heading"),
+				desc: I18n.t("settings.accessibility.description"),
+				aliases: [
+					I18n.t("settings.accessibility.highTextContrast.name"),
+				],
+				render: (setting: Setting) => {
+					this.renderAccessibilitySettings(
+						this.prepareDeclarativeHost(setting),
+					);
+				},
+			},
+			{
+				name: I18n.t("settings.experimental.heading"),
+				desc: I18n.t("settings.experimental.description"),
+				aliases: [
+					I18n.t("settings.experimental.mixColors.name"),
+					I18n.t("settings.experimental.gradientTransition.name"),
+					I18n.t("settings.experimental.tagColors.name"),
+					I18n.t("settings.experimental.reset.name"),
+				],
+				render: (setting: Setting) => {
+					this.renderExperimentalSettings(
+						this.prepareDeclarativeHost(setting),
+					);
+				},
+			},
+		];
+	}
+
+	private prepareDeclarativeHost(setting: Setting): HTMLElement {
+		this.containerEl.classList.add("colored-tags-settings");
+		setting.settingEl.empty();
+		setting.settingEl.classList.add("colored-tags-declarative-host");
+		return setting.settingEl.createDiv({
+			cls: "colored-tags-declarative-content",
+		});
+	}
+
+	private createDeclarativePalette(host: HTMLElement): HTMLElement {
+		const paletteEl = host.createDiv({ cls: "palette" });
+		this.renderPalette(paletteEl);
+		this.declarativePaletteEl = paletteEl;
+		return paletteEl;
 	}
 
 	renderPalette(paletteEl: HTMLElement, animate = false) {
@@ -45,7 +136,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 				`background-color: ${paletteColor}`,
 				index === palette.length - 1 && lastElementStyles,
 			];
-			paletteEl.createEl("div", {
+			paletteEl.createDiv({
 				attr: { style: styles.filter(Boolean).join(";") },
 			});
 		});
@@ -66,7 +157,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 			return;
 		}
 
-		const tagEl = containerEl.createEl("div", {
+		const tagEl = containerEl.createDiv({
 			cls: "tagsExample",
 		});
 
@@ -94,32 +185,13 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		);
 	}
 
-	display(): void {
-		const { containerEl } = this;
-
-		containerEl.empty();
-		containerEl.classList.add("colored-tags-settings");
-		this.paletteChangeSubscribers = [];
-
-		this.renderTags(containerEl);
-
-		const paletteEl = containerEl.createEl("div", {
-			cls: "palette",
-		});
-		this.renderPalette(paletteEl);
-
-		this.renderPaletteSettings(containerEl, paletteEl);
-		this.renderAccessibilitySettings(containerEl);
-		this.renderExperimentalSettings(containerEl);
-	}
-
 	private renderPaletteSettings(
 		containerEl: HTMLElement,
 		paletteEl: HTMLElement,
 	): void {
 		new Setting(containerEl)
 			.setHeading()
-			.setName(I18n.t("settings.palette.heading"))
+			.setName(I18n.t(PALETTE_HEADING_KEY))
 			.setDesc(I18n.t("settings.palette.description"))
 			.addDropdown((dropdown) =>
 				dropdown
@@ -139,11 +211,11 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 						this.plugin.settings.palette.selected =
 							value as ColoredTagsPaletteType;
 						await this.plugin.saveSettings();
-						this.display();
+						this.update();
 					}),
 			);
 
-		if (this.plugin.settings.palette.selected === "custom") {
+		if (this.plugin.settings.palette.selected === ColoredTagsPaletteType.CUSTOM) {
 			this.renderCustomPaletteField(containerEl, paletteEl);
 		}
 
@@ -155,7 +227,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					.setLimits(0, this.plugin.palettes.light.length - 1, 1)
 					.setValue(this.plugin.settings.palette.seed)
 					.onChange(async (value) => {
-						slider.showTooltip();
+						(slider as unknown as SliderWithLegacyTooltip).showTooltip();
 						this.plugin.settings.palette.seed = value;
 						await this.plugin.saveSettings();
 						this.renderPalette(paletteEl);
@@ -174,7 +246,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 			.setDesc("")
 			.addText((text) => {
 				customPaletteInput = text;
-				text.inputEl.style.minWidth = "100%";
+				text.inputEl.classList.add("colored-tags-custom-palette-input");
 				text.setValue(
 					this.plugin.settings.palette.custom,
 				).setPlaceholder(I18n.t("settings.palette.custom.placeholder"));
@@ -188,8 +260,9 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					}
 				});
 			});
-		customPaletteField.descEl.innerHTML = I18n.t(
-			"settings.palette.custom.description",
+		this.renderCodeDescription(
+			customPaletteField.descEl,
+			I18n.t("settings.palette.custom.description"),
 		);
 
 		if (customPaletteInput) {
@@ -199,6 +272,56 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 				customPaletteInput,
 			);
 		}
+	}
+
+	private renderCodeDescription(
+		containerEl: HTMLElement,
+		description: string,
+	): void {
+		const startTag = "<code>";
+		const endTag = "</code>";
+		const startIndex = description.indexOf(startTag);
+		const endIndex = description.indexOf(endTag, startIndex + startTag.length);
+
+		containerEl.empty();
+		if (startIndex < 0 || endIndex < 0) {
+			containerEl.textContent = description;
+			return;
+		}
+
+		containerEl.append(description.slice(0, startIndex));
+		containerEl.createEl("code", {
+			text: description.slice(startIndex + startTag.length, endIndex),
+		});
+		containerEl.append(description.slice(endIndex + endTag.length));
+	}
+
+	private renderCommunityDescription(containerEl: HTMLElement): void {
+		const linkStart = "__COLORED_TAGS_LINK_START__";
+		const linkEnd = "__COLORED_TAGS_LINK_END__";
+		const description = I18n.t(
+			"settings.palette.custom.community.description",
+			{ communityLinkStart: linkStart, communityLinkEnd: linkEnd },
+		);
+		const startIndex = description.indexOf(linkStart);
+		const endIndex = description.indexOf(linkEnd, startIndex + linkStart.length);
+
+		containerEl.empty();
+		if (startIndex < 0 || endIndex < 0) {
+			containerEl.textContent = description.split(linkStart).join("").split(linkEnd).join("");
+			return;
+		}
+
+		containerEl.append(description.slice(0, startIndex));
+		const link = containerEl.createEl("a", {
+			attr: {
+				href: "https://github.com/pfrankov/obsidian-colored-tags/discussions/18",
+				target: "_blank",
+				rel: "noopener noreferrer",
+			},
+		});
+		link.textContent = description.slice(startIndex + linkStart.length, endIndex);
+		containerEl.append(description.slice(endIndex + linkEnd.length));
 	}
 
 	private renderCommunityPalettesSection(
@@ -214,16 +337,10 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 		sectionSetting.settingEl.classList.add("community-palettes");
 		const descEl = sectionSetting.descEl;
 		descEl.empty();
-		const communityLinkStart =
-			'<a href="https://github.com/pfrankov/obsidian-colored-tags/discussions/18" target="_blank">';
-		const communityLinkEnd = "</a>";
 		const descriptionEl = descEl.createDiv({
 			cls: "community-palettes__description",
 		});
-		descriptionEl.innerHTML = I18n.t(
-			"settings.palette.custom.community.description",
-			{ communityLinkStart, communityLinkEnd },
-		);
+		this.renderCommunityDescription(descriptionEl);
 
 		const scrollContainer = descEl.createDiv({
 			cls: "community-palettes__scroll",
@@ -393,7 +510,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					.setValue(this.showAccessibility)
 					.onChange(async (value) => {
 						this.showAccessibility = value;
-						this.display();
+						this.update();
 					}),
 			);
 
@@ -414,7 +531,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 							this.plugin.settings.accessibility.highTextContrast =
 								value;
 							await this.plugin.saveSettings();
-							this.display();
+							this.update();
 						}),
 				);
 		}
@@ -430,7 +547,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					.setValue(this.showExperimental)
 					.onChange(async (value) => {
 						this.showExperimental = value;
-						this.display();
+						this.update();
 					}),
 			);
 
@@ -447,7 +564,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.mixColors = value;
 						await this.plugin.saveSettings();
-						this.display();
+						this.update();
 					}),
 			);
 
@@ -459,7 +576,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.transition = value;
 						await this.plugin.saveSettings();
-						this.display();
+						this.update();
 					}),
 			);
 
@@ -474,7 +591,6 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					.setClass("mod-warning")
 					.onClick(async () => {
 						new Notice(I18n.t("notices.resetDone"), 10000);
-						button.setDisabled(true);
 						button.buttonEl.setAttribute("disabled", "true");
 						button.buttonEl.classList.remove("mod-warning");
 						this.plugin.settings = Object.assign(
@@ -589,7 +705,7 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 
 	private renderPaletteSwatches(
 		paletteEl: HTMLElement,
-		onSelect: (index: number) => void,
+		onSelect: (index: number) => Promise<void>,
 	) {
 		paletteEl.empty();
 		const palette = this.getActivePalette();
@@ -605,7 +721,9 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					)} ${index + 1}`,
 				},
 			});
-			swatch.addEventListener("click", () => onSelect(index));
+			swatch.addEventListener("click", () => {
+				void onSelect(index);
+			});
 		});
 	}
 
@@ -662,16 +780,24 @@ export class ColoredTagsPluginSettingTab extends PluginSettingTab {
 					},
 					text: "✕",
 				});
-				removeButton.addEventListener("click", async (event) => {
+				removeButton.addEventListener("click", (event) => {
 					event.preventDefault();
 					event.stopPropagation();
-					delete this.plugin.settings.tagColors[tag];
-					await this.plugin.saveSettings();
-					this.renderTagColorAssignments(listEl, onChange);
+					void this.removeTagColorAssignment(tag, listEl, onChange);
 				});
 			});
 
 		onChange?.();
+	}
+
+	private async removeTagColorAssignment(
+		tag: string,
+		listEl: HTMLElement,
+		onChange?: () => void,
+	): Promise<void> {
+		delete this.plugin.settings.tagColors[tag];
+		await this.plugin.saveSettings();
+		this.renderTagColorAssignments(listEl, onChange);
 	}
 
 	private populateTagOptions(datalist: HTMLElement): void {

@@ -9,7 +9,7 @@ export class CSSManager {
 			return;
 		}
 		this.isPending = true;
-		Promise.resolve().then(() => this.flush());
+		void Promise.resolve().then(() => this.flush());
 	}
 
 	private flush(): void {
