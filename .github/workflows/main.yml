@@ -25,13 +25,53 @@ jobs:
       - name: Build plugin
         run: npm run build
 
-      - name: Create release
+      - name: Create or update release assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
+          set -euo pipefail
           tag="${GITHUB_REF#refs/tags/}"
+          export RELEASE_TAG="$tag"
+          node -e '
+            const tag = process.env.RELEASE_TAG;
+            if (!/^\d+\.\d+\.\d+$/.test(tag) ||
+                ["./package.json", "./manifest.json", "./dist/manifest.json"]
+                  .some(file => require(file).version !== tag)) {
+              throw new Error("Tag must match the package and source/built manifest versions");
+            }
+          '
+          remote_commit="$(gh api "repos/$GITHUB_REPOSITORY/commits/refs/tags/$tag" --jq '.sha')"
+          test "$remote_commit" = "$(git rev-parse HEAD)"
+          for asset in dist/main.js dist/manifest.json dist/styles.css; do
+            test -s "$asset"
+          done
 
-          gh release create "$tag" \
-            --title="$tag" \
-            --draft \
-            dist/main.js dist/manifest.json dist/styles.css
+          # A failed lookup must not be mistaken for a missing release.
+          release_tags="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[].tag_name')"
+          if grep -Fxq -- "$tag" <<< "$release_tags"; then
+            asset_names="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')"
+            download_dir="$(mktemp -d)"
+            trap 'rm -rf "$download_dir"' EXIT
+            missing=()
+            for asset in dist/main.js dist/manifest.json dist/styles.css; do
+              name="${asset##*/}"
+              if grep -Fxq -- "$name" <<< "$asset_names"; then
+                gh release download "$tag" --repo "$GITHUB_REPOSITORY" \
+                  --pattern "$name" --dir "$download_dir"
+                if ! cmp -s "$asset" "$download_dir/$name"; then
+                  echo "Existing release asset differs: $name; refusing to overwrite" >&2
+                  exit 1
+                fi
+              else
+                missing+=("$asset")
+              fi
+            done
+            if (( ${#missing[@]} )); then
+              gh release upload "$tag" --repo "$GITHUB_REPOSITORY" "${missing[@]}"
+            fi
+          else
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
+              --title="$tag" --draft --verify-tag \
+              dist/main.js dist/manifest.json dist/styles.css
+          fi
