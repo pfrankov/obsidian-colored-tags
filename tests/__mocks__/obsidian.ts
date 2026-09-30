@@ -16,6 +16,7 @@ export class App {
 }
 
 export class Workspace {
+	on = vi.fn();
 	onLayoutReady(callback: () => void): void {
 		// In tests, execute callback immediately
 		callback();
@@ -70,6 +71,9 @@ export class Plugin {
 		this.app = app;
 		this.manifest = manifest;
 	}
+
+	registerEvent = vi.fn();
+	registerEditorExtension = vi.fn();
 
 	addSettingTab(tab: PluginSettingTab): void {
 		this.settingTabs.push(tab);
@@ -593,3 +597,7 @@ export const requestUrl = vi.fn(
 		json: [],
 	}),
 );
+
+export function debounce<T extends (...args: any[]) => any>(callback: T): T {
+	return callback;
+}
