@@ -21,7 +21,7 @@ const createPlugin = () => {
 	plugin.palettes = { light: ["#111111"], dark: ["#222222"] };
 
 	(plugin as any).cssManager = {
-		append: vi.fn(),
+		setTagColors: vi.fn(),
 		removeAll: vi.fn(),
 	} as any;
 
@@ -68,36 +68,19 @@ describe("ColoredTagsPlugin tag colors", () => {
 		expect(calls[1][4]).toBe((plugin as any).tagColorMap);
 	});
 
-	it("includes property tag selectors in generated styles", () => {
+	it("passes both theme colors to the static style manager", () => {
 		const plugin = createPlugin();
-
-		plugin.colorizeTag("excalidraw");
-
-		const css = ((plugin as any).cssManager.append as any).mock.calls[0][0];
-		expect(css).toContain(
-			'body .metadata-property[data-property-key="tags" i] .multi-select-pill.colored-tag-excalidraw',
+		plugin.colorizeTag("#Mixed/Case");
+		const colors = {
+			background: "#000000",
+			color: "#ffffff",
+			linearGradient: ["#000000", "#111111"],
+		};
+		expect((plugin as any).cssManager.setTagColors).toHaveBeenCalledWith(
+			"Mixed/Case",
+			colors,
+			colors,
 		);
-		expect(css).toContain(
-			'body .metadata-property[data-property-key="tags" i] .multi-select-pill-remove-button.colored-tag-excalidraw',
-		);
-	});
-
-	it("matches reading view tag links regardless of href casing", () => {
-		const plugin = createPlugin();
-
-		plugin.colorizeTag("Mixed/Case");
-
-		const css = ((plugin as any).cssManager.append as any).mock.calls[0][0];
-		expect(css).toContain('body a.tag[href="#Mixed\\/Case" i]');
-	});
-
-	it("does not leak flat selectors from nested tags to other tags", () => {
-		const plugin = createPlugin();
-
-		plugin.colorizeTag("ok/in/both/modes");
-
-		const css = ((plugin as any).cssManager.append as any).mock.calls[0][0];
-		expect(css).not.toContain(".cm-tag-okinbothmodes.cm-hashtag");
 	});
 
 	it("remaps tag colors to the closest match when palettes change", () => {

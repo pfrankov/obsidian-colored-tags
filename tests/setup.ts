@@ -114,3 +114,10 @@ if (!(Node.prototype as any).instanceOf) {
 		return this instanceof type;
 	};
 }
+
+// Obsidian helper for dynamic custom properties.
+HTMLElement.prototype.setCssProps = function (props: Record<string, string>) {
+	for (const [name, value] of Object.entries(props)) {
+		this.style.setProperty(name, value);
+	}
+};

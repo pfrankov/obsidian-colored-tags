@@ -48,5 +48,4 @@ jobs:
           @typescript-eslint/parser@8.35.1
 
       - name: Run official Obsidian rules
-        continue-on-error: true
         run: npx eslint "src/**/*.ts" package.json --config eslint.obsidian.config.mjs

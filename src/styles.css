@@ -1,3 +1,33 @@
+body a.tag[data-colored-tags],
+body .cm-s-obsidian .cm-line span.cm-hashtag[data-colored-tags],
+body .metadata-property[data-property-key="tags" i] .multi-select-pill[data-colored-tags],
+body .bases-metadata-value[data-property-type="tags" i] .multi-select-pill[data-colored-tags] {
+	background-color: var(--colored-tags-light-background);
+	color: var(--colored-tags-light-color);
+	background-image: linear-gradient(108deg, var(--colored-tags-light-gradient));
+}
+
+body .metadata-property[data-property-key="tags" i] .multi-select-pill-remove-button[data-colored-tags],
+body .bases-metadata-value[data-property-type="tags" i] .multi-select-pill-remove-button[data-colored-tags] {
+	color: var(--colored-tags-light-color);
+	stroke: var(--colored-tags-light-color);
+}
+
+body.theme-dark a.tag[data-colored-tags],
+body.theme-dark .cm-s-obsidian .cm-line span.cm-hashtag[data-colored-tags],
+body.theme-dark .metadata-property[data-property-key="tags" i] .multi-select-pill[data-colored-tags],
+body.theme-dark .bases-metadata-value[data-property-type="tags" i] .multi-select-pill[data-colored-tags] {
+	background-color: var(--colored-tags-dark-background);
+	color: var(--colored-tags-dark-color);
+	background-image: linear-gradient(108deg, var(--colored-tags-dark-gradient));
+}
+
+body.theme-dark .metadata-property[data-property-key="tags" i] .multi-select-pill-remove-button[data-colored-tags],
+body.theme-dark .bases-metadata-value[data-property-type="tags" i] .multi-select-pill-remove-button[data-colored-tags] {
+	color: var(--colored-tags-dark-color);
+	stroke: var(--colored-tags-dark-color);
+}
+
 .colored-tags-settings .tagsExample {
 	display: flex;
 	gap: 0.5em;

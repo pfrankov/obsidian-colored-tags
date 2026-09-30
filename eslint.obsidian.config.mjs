@@ -17,12 +17,4 @@ export default defineConfig([
 			},
 		},
 	},
-	{
-		files: ["src/CSSManager.ts"],
-		rules: {
-			// Core functionality: generated selectors/colors are vault- and
-			// user-specific, so they cannot be moved to static styles.css.
-			"obsidianmd/no-forbidden-elements": "off",
-		},
-	},
 ]);
