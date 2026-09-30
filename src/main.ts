@@ -1,4 +1,4 @@
-import { debounce, Notice, Plugin, requestUrl } from "obsidian";
+import { debounce, Plugin } from "obsidian";
 import { coloredClassApplierPlugin } from "./ColoredClassApplierPlugin";
 import { BaseViewTagApplier } from "./tag-appliers/BaseViewTagApplier";
 import { ColoredTagsPluginSettingTab } from "./ColoredTagsPluginSettingTab";
@@ -10,13 +10,8 @@ import {
 import { ColorService } from "./ColorService";
 import { CSSManager } from "./CSSManager";
 import { TagManager } from "./TagManager";
-import { I18n } from "./i18n";
 import { normalizePaletteIndex, normalizeTagName } from "./tagUtils";
 import { PropertiesTagApplier } from "./tag-appliers/PropertiesTagApplier";
-
-type ReleaseResponse = {
-	tag_name: string;
-};
 
 type LegacySettingsData = {
 	_version: number;
@@ -29,7 +24,6 @@ type LegacySettingsData = {
 };
 
 export default class ColoredTagsPlugin extends Plugin {
-	private static readonly INITIAL_UPDATE_CHECK_DELAY = 5000; // 5 seconds
 	private static readonly EDITOR_CHANGE_DEBOUNCE = 3000; // 3 seconds
 	private static readonly LEAF_CHANGE_DEBOUNCE = 300; // 300ms
 
@@ -57,10 +51,6 @@ export default class ColoredTagsPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(async () => {
 			await this.saveKnownTags();
 			this.reload();
-
-			window.setTimeout(() => {
-				void this.checkUpdates();
-			}, ColoredTagsPlugin.INITIAL_UPDATE_CHECK_DELAY);
 
 			this.registerEvent(
 				this.app.workspace.on(
@@ -136,28 +126,6 @@ export default class ColoredTagsPlugin extends Plugin {
 				this.colorizeTag(tagName);
 			}
 		});
-	}
-
-	async checkUpdates() {
-		try {
-			const response = (
-				await requestUrl({
-					url: "https://api.github.com/repos/pfrankov/obsidian-colored-tags/releases/latest",
-					method: "GET",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					contentType: "application/json",
-				})
-			).json as ReleaseResponse;
-
-			if (response.tag_name !== this.manifest.version) {
-				const pluginName = this.manifest?.name ?? "Colored Tags";
-				new Notice(I18n.t("notices.updateAvailable", { pluginName }));
-			}
-		} catch (error) {
-			console.error(error);
-		}
 	}
 
 	reload(palettes?: { light: string[]; dark: string[] }) {

@@ -207,7 +207,7 @@ describe("ColoredTagsPlugin tag colors", () => {
 });
 
 
-describe("ColoredTagsPlugin settings and update compatibility", () => {
+describe("ColoredTagsPlugin settings compatibility", () => {
 	it("keeps legacy migration semantics and unknown fields", () => {
 		const plugin = createPlugin();
 		const legacy = {
@@ -229,20 +229,31 @@ describe("ColoredTagsPlugin settings and update compatibility", () => {
 		});
 		expect(migrated.palette.seed).toBe(0);
 	});
+});
 
-	it("keeps update check request behavior with a typed response", async () => {
+describe("ColoredTagsPlugin startup", () => {
+	it("does not make a background update request after layout is ready", async () => {
+		vi.useFakeTimers();
+		vi.mocked(requestUrl).mockClear();
 		const plugin = createPlugin();
-		vi.mocked(requestUrl).mockResolvedValueOnce({
-			status: 200,
-			headers: {},
-			arrayBuffer: new ArrayBuffer(0),
-			json: { tag_name: "1.0.0" },
-			text: "",
-		});
-		await plugin.checkUpdates();
-		expect(requestUrl).toHaveBeenCalledWith(expect.objectContaining({
-			url: "https://api.github.com/repos/pfrankov/obsidian-colored-tags/releases/latest",
-			method: "GET",
-		}));
+		let layoutReady!: () => Promise<void>;
+		vi.spyOn(plugin.app.workspace, "onLayoutReady").mockImplementation(
+			(callback) => {
+				layoutReady = callback as () => Promise<void>;
+			},
+		);
+		const reload = vi.spyOn(plugin, "reload").mockImplementation(() => {});
+
+		try {
+			await plugin.onload();
+			await layoutReady();
+			await vi.advanceTimersByTimeAsync(10_000);
+
+			expect(reload).toHaveBeenCalledOnce();
+			expect(requestUrl).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+			vi.restoreAllMocks();
+		}
 	});
 });
