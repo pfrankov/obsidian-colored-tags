@@ -217,3 +217,74 @@ describe("TagApplier helpers", () => {
 		expect(remove.classList.contains("colored-tag-tag")).toBe(true);
 	});
 });
+
+describe("TagApplier lifecycle", () => {
+	it("cancels queued mutations on stop and can restart", async () => {
+		const callbacks = new Map<number, FrameRequestCallback>();
+		const request = vi
+			.spyOn(window, "requestAnimationFrame")
+			.mockImplementation((callback) => {
+				callbacks.set(1, callback);
+				return 1;
+			});
+		const cancel = vi
+			.spyOn(window, "cancelAnimationFrame")
+			.mockImplementation((id) => {
+				callbacks.delete(id);
+			});
+		const applier = new TagApplier({ selector: ".tag" });
+		const root = document.createElement("div");
+		try {
+			applier.start(root);
+			root.innerHTML = '<a class="tag">#closed</a>';
+			await Promise.resolve();
+			expect(callbacks.size).toBe(1);
+			applier.stop();
+			expect(cancel).toHaveBeenCalledWith(1);
+			expect(callbacks.size).toBe(0);
+			expect(root.firstElementChild?.className).toBe("tag");
+			applier.start(root);
+			expect(root.firstElementChild?.className).toContain(
+				"colored-tag-closed",
+			);
+			root.innerHTML = '<a class="tag">#reopened</a>';
+			await Promise.resolve();
+			callbacks.get(1)!(0);
+			expect(root.firstElementChild?.className).toContain(
+				"colored-tag-reopened",
+			);
+		} finally {
+			applier.stop();
+			request.mockRestore();
+			cancel.mockRestore();
+		}
+	});
+
+	it("schedules and cancels work in the observed document's window", async () => {
+		const frame = document.createElement("iframe");
+		document.body.appendChild(frame);
+		const frameWindow = frame.contentWindow!;
+		const frameDoc = frame.contentDocument!;
+		(frameWindow as any).Node.prototype.instanceOf = function (type: any) {
+			return this instanceof (frameWindow as any)[type.name];
+		};
+		const request = vi
+			.spyOn(frameWindow, "requestAnimationFrame")
+			.mockReturnValue(7);
+		const cancel = vi.spyOn(frameWindow, "cancelAnimationFrame");
+		const applier = new TagApplier({ selector: ".tag" });
+		try {
+			applier.start(frameDoc.body);
+			frameDoc.body.innerHTML = '<a class="tag">#popout</a>';
+			await Promise.resolve();
+			expect(request).toHaveBeenCalledOnce();
+			applier.stop();
+			expect(cancel).toHaveBeenCalledWith(7);
+		} finally {
+			applier.stop();
+			request.mockRestore();
+			cancel.mockRestore();
+			frame.remove();
+		}
+	});
+});
