@@ -92,6 +92,7 @@ export class TagApplier {
 	private readonly getTagTargets: TagTargetsGetter;
 	private pendingNodes = new Set<ParentNode>();
 	private flushHandle: number | null = null;
+	private frameWindow: Window = window;
 
 	constructor(options: TagApplierOptions) {
 		this.selector = options.selector;
@@ -110,6 +111,7 @@ export class TagApplier {
 
 	start(root: ParentNode = document.body): void {
 		this.stop();
+		this.frameWindow = (root as Node).ownerDocument?.defaultView ?? window;
 		this.apply(root);
 
 		this.observer = new MutationObserver((mutations) => {
@@ -128,6 +130,11 @@ export class TagApplier {
 	stop(): void {
 		this.observer?.disconnect();
 		this.observer = undefined;
+		if (this.flushHandle !== null) {
+			this.frameWindow.cancelAnimationFrame(this.flushHandle);
+			this.flushHandle = null;
+		}
+		this.pendingNodes.clear();
 	}
 
 	private handleMutation(mutation: MutationRecord): void {
@@ -154,7 +161,7 @@ export class TagApplier {
 		if (this.flushHandle !== null) {
 			return;
 		}
-		const requestId = window.requestAnimationFrame(() => {
+		const requestId = this.frameWindow.requestAnimationFrame(() => {
 			this.flushHandle = null;
 			const nodes = Array.from(this.pendingNodes);
 			this.pendingNodes.clear();

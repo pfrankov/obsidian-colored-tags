@@ -257,3 +257,87 @@ describe("ColoredTagsPlugin startup", () => {
 		}
 	});
 });
+
+describe("ColoredTagsPlugin pop-out windows", () => {
+	function addTags(doc: Document, tag = "work/project") {
+		const property = doc.createElement("div");
+		property.className = "metadata-property";
+		property.setAttribute("data-property-key", "tags");
+		property.innerHTML = `<span class="multi-select-pill"><span class="multi-select-pill-content">${tag}</span><button class="multi-select-pill-remove-button"></button></span>`;
+		doc.body.appendChild(property);
+		const base = doc.createElement("div");
+		base.className = "bases-metadata-value";
+		base.setAttribute("data-property-type", "tags");
+		base.innerHTML = property.innerHTML;
+		doc.body.appendChild(base);
+		return [property, base];
+	}
+
+	async function startPlugin(docs: Document[] = []) {
+		const plugin = createPlugin();
+		vi.spyOn(plugin.app.workspace, "onLayoutReady").mockImplementation(
+			() => {},
+		);
+		(plugin.app.workspace as any).iterateAllLeaves = (callback: any) => {
+			for (const doc of docs) callback({ getContainer: () => ({ doc }) });
+		};
+		await plugin.onload();
+		plugin.reload();
+		return plugin;
+	}
+
+	function emit(plugin: ColoredTagsPlugin, event: string, doc: Document) {
+		const call = vi
+			.mocked(plugin.app.workspace.on)
+			.mock.calls.find(([name]) => name === event)!;
+		(call[1] as any)({ doc }, { document: doc });
+	}
+
+	it("colors new properties and Bases pills in newly opened windows", async () => {
+		const plugin = await startPlugin();
+		const doc = document.implementation.createHTMLDocument();
+		emit(plugin, "window-open", doc);
+		const targets = addTags(doc);
+		await new Promise((resolve) => window.requestAnimationFrame(resolve));
+		for (const target of targets) {
+			expect(
+				target
+					.querySelector(".multi-select-pill")
+					?.classList.contains("colored-tag-work/project"),
+			).toBe(true);
+			expect(
+				target
+					.querySelector("button")
+					?.classList.contains("colored-tag-work/project"),
+			).toBe(true);
+		}
+		plugin.onunload();
+	});
+
+	it("handles existing windows, reloads, close and reopen without duplicate observers", async () => {
+		const doc = document.implementation.createHTMLDocument();
+		const targets = addTags(doc);
+		const plugin = await startPlugin([doc, doc]);
+		expect(
+			targets[0].querySelector(".multi-select-pill")?.className,
+		).toContain("colored-tag-work/project");
+		plugin.reload();
+		emit(plugin, "window-open", doc);
+		emit(plugin, "window-close", doc);
+		const closed = addTags(doc, "closed");
+		await new Promise((resolve) => window.requestAnimationFrame(resolve));
+		expect(
+			closed[0].querySelector(".multi-select-pill")?.className,
+		).not.toContain("colored-tag-closed");
+		emit(plugin, "window-open", doc);
+		expect(
+			closed[0].querySelector(".multi-select-pill")?.className,
+		).toContain("colored-tag-closed");
+		plugin.onunload();
+		const stopped = addTags(doc, "stopped");
+		await new Promise((resolve) => window.requestAnimationFrame(resolve));
+		expect(
+			stopped[0].querySelector(".multi-select-pill")?.className,
+		).not.toContain("colored-tag-stopped");
+	});
+});

@@ -33,8 +33,10 @@ export default class ColoredTagsPlugin extends Plugin {
 		dark: [] as string[],
 	};
 	private tagColorMap: Map<string, number> = new Map();
-	private baseViewTagApplier = new BaseViewTagApplier();
-	private propertiesTagApplier = new PropertiesTagApplier();
+	private documentAppliers = new Map<
+		Document,
+		{ bases: BaseViewTagApplier; properties: PropertiesTagApplier }
+	>();
 
 	private colorService!: ColorService;
 	private cssManager!: CSSManager;
@@ -47,6 +49,17 @@ export default class ColoredTagsPlugin extends Plugin {
 		this.colorService = new ColorService();
 		this.cssManager = new CSSManager();
 		this.tagManager = new TagManager(this.settings.knownTags);
+
+		this.registerEvent(
+			this.app.workspace.on("window-open", (workspaceWindow) => {
+				this.startDocumentAppliers(workspaceWindow.doc);
+			}),
+		);
+		this.registerEvent(
+			this.app.workspace.on("window-close", (workspaceWindow) => {
+				this.stopDocumentAppliers(workspaceWindow.doc);
+			}),
+		);
 
 		this.app.workspace.onLayoutReady(async () => {
 			await this.saveKnownTags();
@@ -134,8 +147,10 @@ export default class ColoredTagsPlugin extends Plugin {
 			palettes ??
 			this.colorService.generatePalettes(this.settings.palette);
 		this.refreshTagColorMap();
-		this.baseViewTagApplier.start();
-		this.propertiesTagApplier.start();
+		this.startDocumentAppliers(document);
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			this.startDocumentAppliers(leaf.getContainer().doc);
+		});
 		this.update();
 	}
 
@@ -313,8 +328,29 @@ export default class ColoredTagsPlugin extends Plugin {
 	onunload() {
 		this.tagManager.clearRenderedTags();
 		this.cssManager.removeAll();
-		this.baseViewTagApplier.stop();
-		this.propertiesTagApplier.stop();
+		for (const doc of this.documentAppliers.keys()) {
+			this.stopDocumentAppliers(doc);
+		}
+	}
+
+	private startDocumentAppliers(doc: Document): void {
+		if (this.documentAppliers.has(doc)) {
+			return;
+		}
+		const appliers = {
+			bases: new BaseViewTagApplier(),
+			properties: new PropertiesTagApplier(),
+		};
+		this.documentAppliers.set(doc, appliers);
+		appliers.bases.start(doc.body);
+		appliers.properties.start(doc.body);
+	}
+
+	private stopDocumentAppliers(doc: Document): void {
+		const appliers = this.documentAppliers.get(doc);
+		appliers?.bases.stop();
+		appliers?.properties.stop();
+		this.documentAppliers.delete(doc);
 	}
 
 	private refreshTagColorMap(): void {
